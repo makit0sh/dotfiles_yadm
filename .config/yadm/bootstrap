@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd "$HOME"
+yadm submodule update --recursive --init
+
+if [ ! -d "~/zinit/bin" ]; then
+  mkdir -p ~/.zinit
+  git clone https://github.com/zdharma/zinit.git ~/.zinit/bin
+fi
+
