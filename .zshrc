@@ -117,8 +117,7 @@ zinit for \
     light-mode  "zsh-users/zsh-autosuggestions" \
                 "zsh-users/zsh-completions" \
     light-mode  "zdharma/fast-syntax-highlighting" \
-                "zdharma/history-search-multi-word" \
-    light-mode  "denysdovhan/spaceship-prompt"
+                "zdharma/history-search-multi-word"
 
 # Scripts that are built at install (there's single default make target, "install",
 # # and it constructs scripts by `cat'ing a few files). The make'' ice could also be:
@@ -169,3 +168,5 @@ function ranger-cd {
 # This binds Ctrl-O to ranger-cd:
 bindkey -s '^o' 'ranger-cd^M'
 
+# use starship prompt
+eval "$(starship init zsh)"

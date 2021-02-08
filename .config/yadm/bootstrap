@@ -42,6 +42,8 @@ elif [ "$(uname)" == 'Linux' ]; then
   cd ~
 fi
 
+# install starship
+curl -fsSL https://starship.rs/install.sh | bash
 
 if [ ! -e ~/.zinit/bin ]; then
   echo 'initializing zinit'
