@@ -6,19 +6,40 @@ yadm submodule update --recursive --init
 # os package install
 if [ "$(uname)" == 'Darwin' ]; then
   echo 'bootstrap for macOS'
+
 elif [ "$(uname)" == 'Linux' ]; then
   echo 'bootstrap for Linux'
 
   # debian base system
   if type apt > /dev/null 2>&1; then
-	sudo apt update
+    sudo apt update
     sudo apt install -y \
-	  build-essential cmake git python3-dev \
-	  vim-nox ctags zsh tmux xsel zathura \
-	  mono-complete golang nodejs default-jdk npm \
-	  ranger w3m-img atool caca-utils elinks lynx highlight python-pygments mediainfo exiftool poppler-utils mupdf-tools
+      build-essential cmake git python3-dev \
+      vim ctags zsh tmux ranger xsel zathura
+
+    echo -en "Do you want to install optional software? [y/n]"
+    read -r opt
+    case "${opt}" in
+      [y]* )
+        sudo apt install -y \
+          vim-nox \
+          mono-complete golang nodejs default-jdk npm \
+          w3m-img atool caca-utils elinks lynx highlight python-pygments mediainfo exiftool poppler-utils mupdf-tools;;
+    esac
   fi
 
+  # install fonts
+  mkdir -p ~/.local/share/fonts
+  cd ~/.local/share/fonts
+  curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
+    | grep browser_download_url \
+    | grep _with_emoji.zip \
+    | head -n 1 \
+    | cut -d '"' -f 4 \
+    | wget -qi -
+  unzip Cica_*_with_emoji.zip "*.ttf"
+  rm -f Cica_*_with_emoji.zip
+  cd ~
 fi
 
 
@@ -26,5 +47,10 @@ if [ ! -e ~/.zinit/bin ]; then
   echo 'initializing zinit'
   mkdir -p ~/.zinit
   git clone https://github.com/zdharma/zinit.git ~/.zinit/bin
+fi
+
+if command -v vim >/dev/null 2>&1; then
+  echo "Bootstraping Vim"
+  vim '+PlugUpdate' '+PlugClean!' '+PlugUpdate' '+qall'
 fi
 

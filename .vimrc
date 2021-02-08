@@ -253,9 +253,10 @@ endif
 " Specify a directory for plugins
 " - For Neovim: ~/.local/share/nvim/plugged
 " - Avoid using standard Vim directory names like 'plugin'
-call plug#begin('~/.vim/plugged')
+silent! if plug#begin('~/.vim/plugged')
 
 Plug 'w0ng/vim-hybrid'
+Plug 'altercation/vim-colors-solarized'
 Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
 
 if has('lua')
@@ -300,6 +301,7 @@ Plug 'jiangmiao/auto-pairs', {'for': ['lisp', 'scheme', 'clojure']}
 
 " initialize plugin system
 call plug#end()
+endif
 
 " colorscheme
 " use hybrid color scheme
@@ -307,9 +309,13 @@ set background=dark
 
 " let g:hybrid_custom_term_colors = 1 " eneble if your terminal using hybrid colorscheme
 " let g:hybrid_reduced_contrast = 1 " Remove this line if using the default pallete.
-colorscheme hybrid
+" colorscheme hybrid
+colorscheme solarized
 
 " for airline
+let g:airline_theme='solarized'
+let g:airline_solarized_bg='dark'
+let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
