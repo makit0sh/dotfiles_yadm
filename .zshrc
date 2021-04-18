@@ -168,5 +168,8 @@ function ranger-cd {
 # This binds Ctrl-O to ranger-cd:
 bindkey -s '^o' 'ranger-cd^M'
 
+# add bin in home dir to path
+export PATH=~/bin:$PATH
+
 # use starship prompt
 eval "$(starship init zsh)"
