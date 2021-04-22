@@ -17,7 +17,7 @@ elif [ "$(uname)" == 'Linux' ]; then
     sudo apt update
     sudo apt install -y \
       build-essential cmake git python3-dev \
-      vim ctags zsh tmux ranger xsel zathura nodejs npm
+      vim ctags zsh tmux ranger xsel zathura
 
     echo -en "Do you want to install optional software? [y/n]"
     read -r opt
@@ -25,26 +25,38 @@ elif [ "$(uname)" == 'Linux' ]; then
       [y]* )
         sudo apt install -y \
           vim-nox \
+          fcitx-mozc \
           w3m-img atool caca-utils elinks lynx highlight python-pygments mediainfo exiftool poppler-utils mupdf-tools;;
     esac
+
+    if ! command -v n &> /dev/null; then
+      sudo apt install -y nodejs npm
+      sudo npm install n -g
+      sudo n stable
+      sudo apt purge -y nodejs npm
+    fi
   fi
 
   # install fonts
   mkdir -p ~/.local/share/fonts
   cd ~/.local/share/fonts
-  curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
-    | grep browser_download_url \
-    | grep _with_emoji.zip \
-    | head -n 1 \
-    | cut -d '"' -f 4 \
-    | wget -qi -
-  unzip Cica_*_with_emoji.zip "*.ttf"
-  rm -f Cica_*_with_emoji.zip
+  if [ ! -e "Cica-Regular.ttf"]; then
+    curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
+      | grep browser_download_url \
+      | grep _with_emoji.zip \
+      | head -n 1 \
+      | cut -d '"' -f 4 \
+      | wget -qi -
+    unzip Cica_*_with_emoji.zip "*.ttf"
+    rm -f Cica_*_with_emoji.zip
+  fi
   cd ~
 fi
 
 # install starship
-curl -fsSL https://starship.rs/install.sh | bash
+if ! command -v starship &> /dev/null; then
+  curl -fsSL https://starship.rs/install.sh | bash
+fi
 
 if [ ! -e ~/.zinit/bin ]; then
   echo 'initializing zinit'
@@ -57,3 +69,4 @@ if command -v vim >/dev/null 2>&1; then
   vim '+PlugUpdate' '+PlugClean!' '+PlugUpdate' '+qall'
 fi
 
+zsh

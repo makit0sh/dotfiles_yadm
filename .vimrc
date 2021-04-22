@@ -313,6 +313,7 @@ let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
 
 " for coc
+let g:coc_disable_startup_warning = 1
 
 let g:airline#extensions#coc#enabled = 1
 let airline#extensions#coc#error_symbol = 'Error:'
