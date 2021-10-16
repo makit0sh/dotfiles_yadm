@@ -28,13 +28,6 @@ elif [ "$(uname)" == 'Linux' ]; then
           fcitx-mozc \
           w3m-img atool caca-utils elinks lynx highlight python-pygments mediainfo exiftool poppler-utils mupdf-tools;;
     esac
-
-    if ! command -v n &> /dev/null; then
-      sudo apt install -y nodejs npm
-      sudo npm install n -g
-      sudo n stable
-      sudo apt purge -y nodejs npm
-    fi
   fi
 
   # install fonts
