@@ -16,7 +16,7 @@ elif [ "$(uname)" == 'Linux' ]; then
   if type apt > /dev/null 2>&1; then
     sudo apt update
     sudo apt install -y \
-      git vim universal-ctags zsh tmux xsel \
+      curl git vim universal-ctags zsh tmux xsel \
       ranger w3m-img atool caca-utils lynx highlight mediainfo poppler-utils
   fi
 
@@ -37,15 +37,13 @@ elif [ "$(uname)" == 'Linux' ]; then
 fi
 
 # install starship
-if ! command -v starship &> /dev/null; then
-  curl -fsSL https://starship.rs/install.sh | bash
-fi
+curl -fsSL https://starship.rs/install.sh | sh
 
-if [ ! -e ~/.zinit/bin ]; then
-  echo 'initializing zinit'
-  mkdir -p ~/.zinit
-  git clone https://github.com/zdharma/zinit.git ~/.zinit/bin
-fi
+echo 'installing zinit'
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+rm -rf "$(dirname $ZINIT_HOME)"
+mkdir -p "$(dirname $ZINIT_HOME)"
+git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 
 if command -v vim >/dev/null 2>&1; then
   echo "Bootstraping Vim"
@@ -53,4 +51,3 @@ if command -v vim >/dev/null 2>&1; then
 fi
 
 zsh
-
