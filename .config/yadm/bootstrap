@@ -30,8 +30,8 @@ elif [ "$(uname)" == 'Linux' ]; then
       | head -n 1 \
       | cut -d '"' -f 4 \
       | wget -qi -
-    unzip Cica_*_with_emoji.zip "*.ttf"
-    rm -f Cica_*_with_emoji.zip
+    unzip Cica_*.zip "*.ttf"
+    rm -f Cica_*.zip
   fi
   cd ~
 fi
