@@ -16,7 +16,7 @@ elif [ "$(uname)" == 'Linux' ]; then
   if type apt > /dev/null 2>&1; then
     sudo apt update
     sudo apt install -y \
-      git vim ctags zsh tmux xsel \
+      git vim universal-ctags zsh tmux xsel \
       ranger w3m-img atool caca-utils lynx highlight mediainfo poppler-utils
   fi
 
