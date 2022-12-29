@@ -23,7 +23,7 @@ elif [ "$(uname)" == 'Linux' ]; then
   # install fonts
   mkdir -p ~/.local/share/fonts
   cd ~/.local/share/fonts
-  if [ ! -e "Cica-Regular.ttf"]; then
+  if [ ! -e "Cica-Regular.ttf" ]; then
     curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
       | grep browser_download_url \
       | grep _with_emoji.zip \
