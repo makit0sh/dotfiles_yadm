@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if ! command -v COMMAND &> /dev/null
   mkdir -p ~/bin
