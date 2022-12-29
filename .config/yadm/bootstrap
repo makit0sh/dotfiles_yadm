@@ -26,7 +26,7 @@ elif [ "$(uname)" == 'Linux' ]; then
   if [ ! -e "Cica-Regular.ttf" ]; then
     curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
       | grep browser_download_url \
-      | grep _with_emoji.zip \
+      | grep -v _without_emoji.zip \
       | head -n 1 \
       | cut -d '"' -f 4 \
       | wget -qi -
