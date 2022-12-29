@@ -16,18 +16,8 @@ elif [ "$(uname)" == 'Linux' ]; then
   if type apt > /dev/null 2>&1; then
     sudo apt update
     sudo apt install -y \
-      build-essential cmake git python3-dev \
-      vim ctags zsh tmux ranger xsel zathura
-
-    echo -en "Do you want to install optional software? [y/n]"
-    read -r opt
-    case "${opt}" in
-      [y]* )
-        sudo apt install -y \
-          vim-nox \
-          fcitx-mozc \
-          w3m-img atool caca-utils elinks lynx highlight python-pygments mediainfo exiftool poppler-utils mupdf-tools;;
-    esac
+      git vim ctags zsh tmux xsel \
+      ranger w3m-img atool caca-utils lynx highlight mediainfo poppler-utils
   fi
 
   # install fonts
@@ -63,3 +53,4 @@ if command -v vim >/dev/null 2>&1; then
 fi
 
 zsh
+

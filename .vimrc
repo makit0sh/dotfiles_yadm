@@ -171,41 +171,41 @@ cnoremap <C-n> <Down>
 if has("autocmd")
   " remember last cursor position
   augroup vimrcEx
-	au BufRead * if line("'\"") > 0 && line("'\"") <= line("$") |
-		  \ exe "normal g`\"" | endif
+    au BufRead * if line("'\"") > 0 && line("'\"") <= line("$") |
+          \ exe "normal g`\"" | endif
   augroup END
 
   "カーソルラインが重かったから調整
   "http://thinca.hatenablog.com/entry/20090530/1243615055
   "2017-11-20
   augroup vimrc-auto-cursorline
-	autocmd!
-	autocmd CursorMoved,CursorMovedI * call s:auto_cursorline('CursorMoved')
-	autocmd CursorHold,CursorHoldI * call s:auto_cursorline('CursorHold')
-	autocmd WinEnter * call s:auto_cursorline('WinEnter')
-	autocmd WinLeave * call s:auto_cursorline('WinLeave')
+    autocmd!
+    autocmd CursorMoved,CursorMovedI * call s:auto_cursorline('CursorMoved')
+    autocmd CursorHold,CursorHoldI * call s:auto_cursorline('CursorHold')
+    autocmd WinEnter * call s:auto_cursorline('WinEnter')
+    autocmd WinLeave * call s:auto_cursorline('WinLeave')
 
-	let s:cursorline_lock = 0
-	function! s:auto_cursorline(event)
-	  if a:event ==# 'WinEnter'
-		setlocal cursorline
-		let s:cursorline_lock = 2
-	  elseif a:event ==# 'WinLeave'
-		setlocal nocursorline
-	  elseif a:event ==# 'CursorMoved'
-		if s:cursorline_lock
-		  if 1 < s:cursorline_lock
-			let s:cursorline_lock = 1
-		  else
-			setlocal nocursorline
-			let s:cursorline_lock = 0
-		  endif
-		endif
-	  elseif a:event ==# 'CursorHold'
-		setlocal cursorline
-		let s:cursorline_lock = 1
-	  endif
-	endfunction
+    let s:cursorline_lock = 0
+    function! s:auto_cursorline(event)
+      if a:event ==# 'WinEnter'
+        setlocal cursorline
+        let s:cursorline_lock = 2
+      elseif a:event ==# 'WinLeave'
+        setlocal nocursorline
+      elseif a:event ==# 'CursorMoved'
+        if s:cursorline_lock
+          if 1 < s:cursorline_lock
+            let s:cursorline_lock = 1
+          else
+            setlocal nocursorline
+            let s:cursorline_lock = 0
+          endif
+        endif
+      elseif a:event ==# 'CursorHold'
+        setlocal cursorline
+        let s:cursorline_lock = 1
+      endif
+    endfunction
   augroup END
 
 endif
@@ -213,8 +213,8 @@ endif
 " quickfix settings
 if has("autocmd")
   augroup QuickFixCmd
-	autocmd!
-	autocmd QuickFixCmdPost *grep* cwindow
+    autocmd!
+    autocmd QuickFixCmdPost *grep* cwindow
   augroup END
 endif
 
@@ -254,6 +254,7 @@ Plug 'w0ng/vim-hybrid'
 Plug 'altercation/vim-colors-solarized'
 Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
 
+Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
 Plug 'easymotion/vim-easymotion'
 Plug 'junegunn/fzf'
@@ -270,7 +271,6 @@ Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-unimpaired'
 Plug 'tpope/vim-abolish'
 Plug 'tpope/vim-fugitive'
-Plug 'mileszs/ack.vim'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-lastpat'
 Plug 'kana/vim-textobj-entire'
@@ -282,10 +282,6 @@ Plug 'arecarn/vim-fold-cycle'
 Plug 'vim-scripts/xml.vim', {'for': ['xml']}
 Plug 'mattn/emmet-vim', {'for': ['html', 'css']}
 Plug 'ap/vim-css-color'
-
-if has('python')
-  Plug 'taketwo/vim-ros'
-endif
 
 Plug 'jiangmiao/auto-pairs', {'for': ['lisp', 'scheme', 'clojure']}
 
@@ -305,10 +301,20 @@ colorscheme solarized
 " for airline
 let g:airline_theme='solarized'
 let g:airline_solarized_bg='dark'
-let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
+
+" for UltiSnips
+" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
+let g:UltiSnipsExpandTrigger="<C-k>"
+let g:UltiSnipsJumpForwardTrigger="<C-j>"
+let g:UltiSnipsJumpBackwardTrigger="<C-b>"
+let g:UltiSnipsEditSplit="vertical"
+" directory for custom snippets
+let g:UltiSnipsSnippetsDir="~/.vim/UltiSnips"
+" filetypes
+autocmd FileType plaintex UltiSnipsAddFiletypes tex.plaintex
 
 " for vim-anzu
 " mapping

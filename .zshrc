@@ -116,19 +116,13 @@ zstyle ':fzf-tab:*' switch-group ',' '.'
 zinit for \
     light-mode  "zsh-users/zsh-autosuggestions" \
                 "zsh-users/zsh-completions" \
-    light-mode  "zdharma/fast-syntax-highlighting" \
-                "zdharma/history-search-multi-word"
+                "zsh-users/zsh-syntax-highlighting"
 
 # Scripts that are built at install (there's single default make target, "install",
 # # and it constructs scripts by `cat'ing a few files). The make'' ice could also be:
 # # `make"install PREFIX=$ZPFX"`, if "install" wouldn't be the only, default target.
 zinit ice as"program" pick"$ZPFX/bin/git-*" make"PREFIX=$ZPFX"
 zinit light tj/git-extras
-
-# use enhancd for cd
-zinit ice pick"init.sh"
-zinit light "b4b4r07/enhancd"
-export ENHANCD_HOOK_AFTER_CD=ls
 
 # fzf shell completion and key-bindings
 zinit for \
@@ -174,3 +168,4 @@ export PATH=~/bin:$PATH
 
 # use starship prompt
 eval "$(starship init zsh)"
+
