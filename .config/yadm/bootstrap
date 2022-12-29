@@ -41,9 +41,10 @@ curl -fsSL https://starship.rs/install.sh | sh
 
 echo 'installing zinit'
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-rm -rf "$(dirname $ZINIT_HOME)"
-mkdir -p "$(dirname $ZINIT_HOME)"
-git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [ ! -e "$ZINIT_HOME/zinit.zsh" ]; then
+  mkdir -p "$(dirname $ZINIT_HOME)"
+  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
 
 if command -v vim >/dev/null 2>&1; then
   echo "Bootstraping Vim"
