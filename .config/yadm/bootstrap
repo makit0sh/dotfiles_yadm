@@ -9,6 +9,12 @@ mkdir -p ~/bin
 if [ "$(uname)" == 'Darwin' ]; then
   echo 'bootstrap for macOS'
 
+  if type brew > /dev/null 2>&1; then
+    brew update
+    brew install \
+      curl wget vim universal-ctags tmux ranger starship
+  fi
+
 elif [ "$(uname)" == 'Linux' ]; then
   echo 'bootstrap for Linux'
 
@@ -34,10 +40,11 @@ elif [ "$(uname)" == 'Linux' ]; then
     rm -f Cica_*.zip
   fi
   cd ~
-fi
 
-# install starship
-curl -fsSL https://starship.rs/install.sh | sh
+  # install starship
+  curl -fsSL https://starship.rs/install.sh | sh
+
+fi
 
 echo 'installing zinit'
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
