@@ -134,7 +134,10 @@ zinit ice as"program" pick"$ZPFX/bin/git-*" make"PREFIX=$ZPFX"
 zinit light tj/git-extras
 
 # dev tools
-zinit light lukechilds/zsh-nvm
+export NVM_COMPLETION=true
+export NVM_SYMLINK_CURRENT="true"
+export NVM_LAZY_LOAD=true
+zinit wait lucid light-mode for lukechilds/zsh-nvm
 
 # fzf shell completion and key-bindings
 zinit for \
