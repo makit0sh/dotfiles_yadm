@@ -133,6 +133,9 @@ zinit for \
 zinit ice as"program" pick"$ZPFX/bin/git-*" make"PREFIX=$ZPFX"
 zinit light tj/git-extras
 
+# dev tools
+zinit light lukechilds/zsh-nvm
+
 # fzf shell completion and key-bindings
 zinit for \
 	"https://github.com/junegunn/fzf/blob/master/shell/completion.zsh" \
