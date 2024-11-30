@@ -2,7 +2,7 @@
 # borrowed from https://github.com/mattmc3/zsh_unplugged
 function plugin-load {
   local repo plugdir initfile initfiles=()
-  : ${ZPLUGINDIR:=${ZDOTDIR:-~/.config/zsh}/plugins}
+  : ${ZPLUGINDIR:=~/.config/zsh/plugins}
   for repo in $@; do
     plugdir=$ZPLUGINDIR/${repo:t}
     initfile=$plugdir/${repo:t}.plugin.zsh
