@@ -1,3 +1,61 @@
+##? Clone a plugin, identify its init file, source it, and add it to your fpath.
+# borrowed from https://github.com/mattmc3/zsh_unplugged
+function plugin-load {
+  local repo plugdir initfile initfiles=()
+  : ${ZPLUGINDIR:=${ZDOTDIR:-~/.config/zsh}/plugins}
+  for repo in $@; do
+    plugdir=$ZPLUGINDIR/${repo:t}
+    initfile=$plugdir/${repo:t}.plugin.zsh
+    if [[ ! -d $plugdir ]]; then
+      echo "Cloning $repo..."
+      git clone -q --depth 1 --recursive --shallow-submodules \
+        https://github.com/$repo $plugdir
+    fi
+    if [[ ! -e $initfile ]]; then
+      initfiles=($plugdir/*.{plugin.zsh,zsh-theme,zsh,sh}(N))
+      (( $#initfiles )) || { echo >&2 "No init file '$repo'." && continue }
+      ln -sf $initfiles[1] $initfile
+    fi
+    fpath+=$plugdir
+    (( $+functions[zsh-defer] )) && zsh-defer . $initfile || . $initfile
+  done
+}
+
+# version compare
+autoload is-at-least
+
+# Set up fzf key bindings and fuzzy completion
+if is-at-least 0.48 $(fzf --version); then
+  source <(fzf --zsh)
+else
+  # for ubuntu version older than 0.48.0
+  if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
+    source /usr/share/doc/fzf/examples/key-bindings.zsh
+  fi
+  if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
+    source /usr/share/doc/fzf/examples/completion.zsh
+  fi
+fi
+
+#
+# asdf
+#
+. "$HOME/.asdf/asdf.sh"
+
+#
+# plugins from github
+#
+repos=(
+  zsh-users/zsh-autosuggestions
+  zsh-users/zsh-completions
+  zsh-users/zsh-syntax-highlighting
+  Aloxaf/fzf-tab
+  trapd00r/LS_COLORS
+)
+
+plugin-load $repos
+
+
 # alias
 alias c="clear"
 alias cdd="cd ../"
@@ -56,6 +114,9 @@ zstyle ':completion:*:default' menu select=1
 zstyle ':completion:*' verbose yes
 zstyle ':completion:*' completer _expand _complete _match _prefix _approximate _list _history
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # 補完で大文字小文字を区別しない。
+if [ -n "$LS_COLORS" ]; then
+    zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+fi
 setopt complete_in_word      # 語の途中でもカーソル位置で補完
 setopt auto_param_slash      # ディレクトリ名の補完で末尾の / を自動的に付加し、次の補完に備える
 setopt mark_dirs             # ファイル名の展開でディレクトリにマッチした場合 末尾に / を付加
@@ -84,9 +145,6 @@ bindkey "^S" history-incremental-search-forward
 bindkey "^[[A" history-beginning-search-backward-end
 bindkey "^[[B" history-beginning-search-forward-end
 
-# version compare
-autoload is-at-least
-
 # Automatically change the directory in bash after closing ranger
 #
 # This is a bash function for .bashrc to automatically change the directory to
@@ -106,59 +164,6 @@ function ranger-cd {
 
 # This binds Ctrl-O to ranger-cd:
 bindkey -s '^o' 'ranger-cd^M'
-
-# Set up fzf key bindings and fuzzy completion
-if is-at-least 0.48 $(fzf --version); then
-  source <(fzf --zsh)
-else
-  # for ubuntu version older than 0.48.0
-  if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
-    source /usr/share/doc/fzf/examples/key-bindings.zsh
-  fi
-  if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
-    source /usr/share/doc/fzf/examples/completion.zsh
-  fi
-fi
-
-##? Clone a plugin, identify its init file, source it, and add it to your fpath.
-# borrowed from https://github.com/mattmc3/zsh_unplugged
-function plugin-load {
-  local repo plugdir initfile initfiles=()
-  : ${ZPLUGINDIR:=${ZDOTDIR:-~/.config/zsh}/plugins}
-  for repo in $@; do
-    plugdir=$ZPLUGINDIR/${repo:t}
-    initfile=$plugdir/${repo:t}.plugin.zsh
-    if [[ ! -d $plugdir ]]; then
-      echo "Cloning $repo..."
-      git clone -q --depth 1 --recursive --shallow-submodules \
-        https://github.com/$repo $plugdir
-    fi
-    if [[ ! -e $initfile ]]; then
-      initfiles=($plugdir/*.{plugin.zsh,zsh-theme,zsh,sh}(N))
-      (( $#initfiles )) || { echo >&2 "No init file '$repo'." && continue }
-      ln -sf $initfiles[1] $initfile
-    fi
-    fpath+=$plugdir
-    (( $+functions[zsh-defer] )) && zsh-defer . $initfile || . $initfile
-  done
-}
-
-#
-# plugins from github
-#
-repos=(
-  zsh-users/zsh-autosuggestions
-  zsh-users/zsh-completions
-  zsh-users/zsh-syntax-highlighting
-  Aloxaf/fzf-tab
-  trapd00r/LS_COLORS
-)
-
-plugin-load $repos
-
-if [ -n "$LS_COLORS" ]; then
-    zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-fi
 
 # add bin in home dir to path
 export PATH=~/.local/bin:$PATH
