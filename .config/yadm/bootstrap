@@ -12,7 +12,15 @@ if [ "$(uname)" == 'Darwin' ]; then
   if type brew > /dev/null 2>&1; then
     brew update
     brew install \
-      curl wget vim universal-ctags tmux ranger starship
+      curl \
+      wget \
+      vim \
+      universal-ctags \
+      tmux \
+      ranger \
+      starship \
+      fzf \
+      coreutils
   fi
 
 elif [ "$(uname)" == 'Linux' ]; then
@@ -22,8 +30,22 @@ elif [ "$(uname)" == 'Linux' ]; then
   if type apt > /dev/null 2>&1; then
     sudo apt update
     sudo apt install -y \
-      curl git vim universal-ctags zsh tmux xsel \
-      ranger w3m-img atool caca-utils lynx highlight mediainfo poppler-utils
+      curl \
+      git \
+      vim \
+      universal-ctags \
+      zsh \
+      tmux \
+      fzf \
+      xsel \
+      ranger \
+      w3m-img \
+      atool \
+      caca-utils \
+      lynx \
+      highlight \
+      mediainfo \
+      poppler-utils
   fi
 
   # install fonts
