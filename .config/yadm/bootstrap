@@ -12,7 +12,16 @@ if [ "$(uname)" == 'Darwin' ]; then
   if type brew > /dev/null 2>&1; then
     brew update
     brew install \
-      curl wget vim universal-ctags tmux ranger starship
+      curl \
+      git \
+      wget \
+      vim \
+      universal-ctags \
+      tmux \
+      ranger \
+      starship \
+      fzf \
+      coreutils
   fi
 
 elif [ "$(uname)" == 'Linux' ]; then
@@ -22,8 +31,22 @@ elif [ "$(uname)" == 'Linux' ]; then
   if type apt > /dev/null 2>&1; then
     sudo apt update
     sudo apt install -y \
-      curl git vim universal-ctags zsh tmux xsel \
-      ranger w3m-img atool caca-utils lynx highlight mediainfo poppler-utils
+      curl \
+      git \
+      vim \
+      universal-ctags \
+      zsh \
+      tmux \
+      fzf \
+      xsel \
+      ranger \
+      w3m-img \
+      atool \
+      caca-utils \
+      lynx \
+      highlight \
+      mediainfo \
+      poppler-utils
   fi
 
   # install fonts
@@ -46,12 +69,8 @@ elif [ "$(uname)" == 'Linux' ]; then
 
 fi
 
-echo 'installing zinit'
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [ ! -e "$ZINIT_HOME/zinit.zsh" ]; then
-  mkdir -p "$(dirname $ZINIT_HOME)"
-  git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
-fi
+echo 'installing asdf'
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
 
 if command -v vim >/dev/null 2>&1; then
   echo "Bootstraping Vim"
@@ -59,3 +78,4 @@ if command -v vim >/dev/null 2>&1; then
 fi
 
 zsh
+

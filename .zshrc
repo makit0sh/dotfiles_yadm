@@ -1,3 +1,61 @@
+##? Clone a plugin, identify its init file, source it, and add it to your fpath.
+# borrowed from https://github.com/mattmc3/zsh_unplugged
+function plugin-load {
+  local repo plugdir initfile initfiles=()
+  : ${ZPLUGINDIR:=${ZDOTDIR:-~/.config/zsh}/plugins}
+  for repo in $@; do
+    plugdir=$ZPLUGINDIR/${repo:t}
+    initfile=$plugdir/${repo:t}.plugin.zsh
+    if [[ ! -d $plugdir ]]; then
+      echo "Cloning $repo..."
+      git clone -q --depth 1 --recursive --shallow-submodules \
+        https://github.com/$repo $plugdir
+    fi
+    if [[ ! -e $initfile ]]; then
+      initfiles=($plugdir/*.{plugin.zsh,zsh-theme,zsh,sh}(N))
+      (( $#initfiles )) || { echo >&2 "No init file '$repo'." && continue }
+      ln -sf $initfiles[1] $initfile
+    fi
+    fpath+=$plugdir
+    (( $+functions[zsh-defer] )) && zsh-defer . $initfile || . $initfile
+  done
+}
+
+# version compare
+autoload is-at-least
+
+# Set up fzf key bindings and fuzzy completion
+if is-at-least 0.48 $(fzf --version); then
+  source <(fzf --zsh)
+else
+  # for ubuntu version older than 0.48.0
+  if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
+    source /usr/share/doc/fzf/examples/key-bindings.zsh
+  fi
+  if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
+    source /usr/share/doc/fzf/examples/completion.zsh
+  fi
+fi
+
+#
+# asdf
+#
+. "$HOME/.asdf/asdf.sh"
+
+#
+# plugins from github
+#
+repos=(
+  zsh-users/zsh-autosuggestions
+  zsh-users/zsh-completions
+  zsh-users/zsh-syntax-highlighting
+  Aloxaf/fzf-tab
+  trapd00r/LS_COLORS
+)
+
+plugin-load $repos
+
+
 # alias
 alias c="clear"
 alias cdd="cd ../"
@@ -5,7 +63,11 @@ alias cddd="cd ../../"
 alias cdddd="cd ../../../"
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias ls='ls --color=auto'
+if [[ "$(uname)" == "Darwin" ]]; then
+  alias ls='gls --color=auto'
+else
+  alias ls='ls --color=auto'
+fi
 alias l='ls'
 alias ll='ls -hl'
 alias la='ls -a'
@@ -13,7 +75,7 @@ alias lla='ls -la'
 alias mv="mv -i"
 alias rm='rm -i'
 alias vi='vim'
-# auto ls after cd  
+# auto ls after cd
 function cd(){
   builtin cd $@ && ls;
 }
@@ -52,6 +114,9 @@ zstyle ':completion:*:default' menu select=1
 zstyle ':completion:*' verbose yes
 zstyle ':completion:*' completer _expand _complete _match _prefix _approximate _list _history
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' # 補完で大文字小文字を区別しない。
+if [ -n "$LS_COLORS" ]; then
+    zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+fi
 setopt complete_in_word      # 語の途中でもカーソル位置で補完
 setopt auto_param_slash      # ディレクトリ名の補完で末尾の / を自動的に付加し、次の補完に備える
 setopt mark_dirs             # ファイル名の展開でディレクトリにマッチした場合 末尾に / を付加
@@ -79,83 +144,6 @@ bindkey "^N" history-beginning-search-forward-end
 bindkey "^S" history-incremental-search-forward
 bindkey "^[[A" history-beginning-search-backward-end
 bindkey "^[[B" history-beginning-search-forward-end
-
-# zinit for plugins
-ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-source "${ZINIT_HOME}/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
-
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
-
-# For GNU ls (the binaries can be gls, gdircolors, e.g. on OS X when installing the
-# # coreutils package from Homebrew; you can also use https://github.com/ogham/exa)
-zinit ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh" nocompile'!'
-zinit light "trapd00r/LS_COLORS"
-
-# Binary release in archive, from GitHub-releases page.
-# After automatic unpacking it provides program "fzf".
-zinit ice from"gh-r" as"program"
-zinit load "junegunn/fzf"
-
-zinit ice src"z.sh"
-zinit load "rupa/z"
-
-# Replace zsh default completion selection menu with fzf
-zinit light Aloxaf/fzf-tab
-# disable sort when completing `git checkout`
-zstyle ':completion:*:git-checkout:*' sort false
-# set descriptions format to enable group support
-zstyle ':completion:*:descriptions' format '[%d]'
-# set list-colors to enable filename colorizing
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-# preview directory's content with exa when completing cd
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
-# switch group using `,` and `.`
-zstyle ':fzf-tab:*' switch-group ',' '.'
-
-# A glance at the new for-syntax – load all of the above
-# plugins with a single command..
-zinit for \
-    light-mode  "zsh-users/zsh-autosuggestions" \
-                "zsh-users/zsh-completions" \
-                "zsh-users/zsh-syntax-highlighting"
-
-# Scripts that are built at install (there's single default make target, "install",
-# # and it constructs scripts by `cat'ing a few files). The make'' ice could also be:
-# # `make"install PREFIX=$ZPFX"`, if "install" wouldn't be the only, default target.
-zinit ice as"program" pick"$ZPFX/bin/git-*" make"PREFIX=$ZPFX"
-zinit light tj/git-extras
-
-# dev tools
-export NVM_COMPLETION=true
-export NVM_SYMLINK_CURRENT="true"
-export NVM_LAZY_LOAD=true
-zinit wait lucid light-mode for lukechilds/zsh-nvm
-
-# fzf shell completion and key-bindings
-zinit for \
-	"https://github.com/junegunn/fzf/blob/master/shell/completion.zsh" \
-	"https://github.com/junegunn/fzf/blob/master/shell/key-bindings.zsh"
-
-# z search with fzf (require rupa/z)
-fzf-z-search() {
-    local res=$(z | sort -rn | cut -c 12- | fzf)
-    if [ -n "$res" ]; then
-        BUFFER+="cd $res"
-        zle accept-line
-    else
-        return 1
-    fi
-}
-zle -N fzf-z-search
-bindkey '^f' fzf-z-search
 
 # Automatically change the directory in bash after closing ranger
 #
