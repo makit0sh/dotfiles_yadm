@@ -40,7 +40,8 @@ fi
 #
 # asdf
 #
-. "$HOME/.asdf/asdf.sh"
+export ASDF_DATA_DIR="${HOME}/.asdf"
+export PATH="$ASDF_DATA_DIR/shims:$PATH"
 
 #
 # plugins from github
