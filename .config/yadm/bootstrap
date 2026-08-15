@@ -121,13 +121,21 @@ fi
 
 # --- 仕上げ -----------------------------------------------------------------
 
-cat <<'EOF'
+echo
+echo 'bootstrap 完了。残りは手で:'
+echo
 
-bootstrap 完了。残りは手で:
-
-  1. yadm config local.class personal   (仕事マシンなら work)
-     -> そのあと yadm alt で ##class.* のファイルが展開される
-  2. 新しいシェルを開く                 (mise の activation が入る)
-  3. gh auth login / claude のログイン
-
-EOF
+# class は github_yadm_bootstrap.sh 経由なら設定済みで、bootstrap を単体で
+# 叩いたときだけ未設定になる。両方で同じ文言を出すと、one-liner の直後に
+# 「class を設定しろ」と「class は personal にした」が並んで矛盾して見える。
+if class=$(yadm config local.class 2>/dev/null) && [ -n "$class" ]; then
+  echo "  - class は \"$class\"(設定済み)。変えるなら:"
+  echo "      yadm config local.class work && yadm alt"
+else
+  echo '  - class を決める(##class.* のファイルはこれを見て展開される):'
+  echo '      yadm config local.class personal   # 仕事マシンなら work'
+  echo '      yadm alt'
+fi
+echo '  - 新しいシェルを開く(mise の activation が入る)'
+echo '  - gh auth login / claude のログイン'
+echo
