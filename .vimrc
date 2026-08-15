@@ -1,7 +1,16 @@
 " basic settings
 
 " turnoff vi compatibility if set
-if !&compatible
+"
+" 条件が逆だった(2026-08-15 修正)。`if !&compatible` は「既に非互換なら
+" 非互換にする」で、**互換モードで始まったときに何もしない**。
+"
+" 対話起動では vimrc が見つかった時点で Vim が自動的に nocompatible にするので
+" 表に出ないが、**`vim -u <file>` は compatible=1 で始まる**。その状態では
+" 行継続(行頭の `\`)が使えず、それを使っているプラグインが軒並み
+" 「E10: \ の後は / か ? か & でなければなりません」で読み込みに失敗する。
+" headless の PlugInstall が動かなかった原因がこれ。
+if &compatible
   set nocompatible
 endif
 
@@ -349,9 +358,15 @@ endif
 " for vim-anyfold
 
 " activate anyfold by default
+"
+" `exists(':AnyFoldActivate')` を**発火時に**見る。理由は2つ:
+"   - プラグインが無い箱では、ファイルを開くたびに E492 が出ていた
+"     (<Plug> の map と同じ形の問題)
+"   - PlugInstall の最中は、まだ読み込まれていない状態で FileType が発火する。
+"     headless の PlugInstall が最後に exit 1 を返していた原因がこれ
 augroup anyfold
     autocmd!
-    autocmd Filetype * AnyFoldActivate
+    autocmd Filetype * if exists(':AnyFoldActivate') | AnyFoldActivate | endif
 augroup END
 
 " disable anyfold for large files

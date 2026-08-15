@@ -26,7 +26,8 @@ brew "watch"
 
 # --- エディタ・ナビゲーション -----------------------------------------------
 brew "vim"
-brew "universal-ctags" # vim-gutentags が呼ぶ
+# universal-ctags は外した(2026-08-15)。呼んでいたのは vim-gutentags と tagbar
+# で、どちらも vim を army knife に絞ったときに落としたため。
 # yazi(ファイラ)と zoxide はここではなく mise が持つ。**OS を跨いで同じ版が
 # 欲しいものは mise**、というこのリポジトリの層分けに従った結果で、Ubuntu の apt
 # には yazi が無く zoxide も古い、という実情とも噛み合う。

@@ -100,16 +100,23 @@ if command -v vim >/dev/null 2>&1; then
     curl -fsSLo ~/.vim/autoload/plug.vim --create-dirs \
       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   fi
-  # `vim '+PlugUpdate' ... '+qall'` は **TTY が無いと永久に待つ**。
-  # 2026-08-15 に Ubuntu コンテナで実測: vim が19分ハングして bootstrap が
-  # 先へ進まなかった(プロビジョニング用のスクリプトとしては致命的で、
-  # 手で流している限り気づけない類のもの)。
+  # ここは2026-08-15 に2回直している。
   #
-  # 非対話で回す形は vim-plug が案内しているとおり `-es`(サイレント ex モード)
-  # + `--sync`(完了までブロックする)。念のため timeout も噛ませる。
-  timeout 600 vim -es -u ~/.vimrc -i NONE \
-    -c 'PlugInstall --sync' -c 'PlugClean!' -c 'qa' </dev/null >/dev/null 2>&1 ||
-    echo 'vim plugins: skipped or timed out (run :PlugInstall by hand)'
+  # 1回目: 元は `vim '+PlugUpdate' ... '+qall'` で、**TTY が無いと永久に待つ**。
+  #   Ubuntu コンテナで19分ハングして bootstrap が先へ進まなかった。
+  #   非対話の形は `-es`(サイレント ex モード)+ `--sync`(完了までブロック)。
+  #
+  # 2回目: それでも exit 1 を返し続けていた。**中身は成功していて、終了コード
+  #   だけが失敗**という一番たちの悪い形で、原因は vimrc 側に2つあった
+  #   (`if !&compatible` の条件が逆で headless が vi 互換のまま動いていた件と、
+  #   未読込の AnyFoldActivate を autocmd が呼んでいた件)。どちらも直したので、
+  #   ここは失敗を素直に失敗として扱ってよい。
+  if timeout 600 vim -es -u ~/.vimrc -i NONE \
+    -c 'PlugInstall --sync' -c 'PlugClean!' -c 'qa' </dev/null >/dev/null 2>&1; then
+    echo "vim plugins: $(ls ~/.vim/plugged 2>/dev/null | wc -l | tr -d ' ') installed"
+  else
+    echo 'vim plugins: FAILED (run `vim -es -u ~/.vimrc -c "PlugInstall --sync" -c qa` to see why)'
+  fi
 fi
 
 # --- 仕上げ -----------------------------------------------------------------

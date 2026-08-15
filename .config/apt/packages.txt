@@ -27,7 +27,8 @@ zsh
 # --- エディタ・ナビゲーション -----------------------------------------------
 vim
 tmux
-universal-ctags
+# universal-ctags は外した(2026-08-15)。vim-gutentags / tagbar を落としたので
+# 呼ぶものが無くなった。
 # ファイラは yazi に移行(2026-08-15)。apt に無いので mise が持つ。
 # ranger と、そのプレビュー用に並べていた w3m-img / atool / caca-utils /
 # lynx / highlight / mediainfo も一緒に外した — yazi は自前でプレビューする。
