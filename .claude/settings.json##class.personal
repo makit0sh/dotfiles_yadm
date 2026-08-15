@@ -1,0 +1,6 @@
+{
+  "model": "opus[1m]",
+  "effortLevel": "medium",
+  "tui": "fullscreen",
+  "agentPushNotifEnabled": true
+}

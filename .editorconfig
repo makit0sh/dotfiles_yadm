@@ -1,38 +1,26 @@
-# EditorConfig is awesome: https://EditorConfig.org
+# https://EditorConfig.org
+#
+# ホーム直下に置く既定値。リポジトリ側に .editorconfig があればそちらが勝つ。
+# 2026-08-15: `trim_traililng_whitespace` と綴りを間違えていて、末尾空白の除去が
+# 一度も効いていなかった。EditorConfig は知らないキーを黙って無視するので、
+# 間違いに気づく機会が無い。あわせて editorconfig.org のサンプルから写した
+# ままだった節(lib/**.js、.travis.yml)を落とした。
 
-# top-most EditorConfig file
 root = true
 
-# Unix-style newlines with a newline ending every file
 [*]
 indent_style = space
 indent_size = 2
 end_of_line = lf
-trim_traililng_whitespace = true
+trim_trailing_whitespace = true
 insert_final_newline = true
 charset = utf-8
 
-# Matches multiple files with brace expansion notation
-# Set default charset
-[*.{js,py}]
-charset = utf-8
-
-# 4 space indentation
 [*.py]
-indent_style = space
 indent_size = 4
 
-# Tab indentation (no size specified)
 [Makefile]
 indent_style = tab
 
-# Indentation override for all JS under lib directory
-[lib/**.js]
-indent_style = space
-indent_size = 2
-
-# Matches the exact files either package.json or .travis.yml
-[{package.json,.travis.yml}]
-indent_style = space
-indent_size = 2
-
+[*.{c,cpp,h,hpp}]
+indent_size = 4

@@ -1,0 +1,33 @@
+# mise のグローバル設定(全マシン共通)。プロジェクト側の .tool-versions /
+# mise.toml があればそちらが勝つ。
+#
+# 2026-08-15 に ~/.tool-versions から移行した。移行前は nodejs 22.11.0 が
+# 書かれたまま放置されていて、**プロジェクトの外で pnpm を叩くと 22.11.0 に
+# 落ちて「pnpm が壊れた」ように見える**(pnpm 11 は Node 22.13 以上を要求する)
+# という形で実害が出ていた。両方に書くと必ずまたずれるので、ここ一箇所にする。
+
+[tools]
+node = "24.18.0"
+# 3.13.2t(free-threaded ビルド)から素の 3.14.7 へ。t を選んでいたのは意図では
+# なく惰性だったので、Ubuntu 側と揃う普通のビルドにする。
+python = "3.14.7"
+uv = "0.12.4"
+pnpm = "11.15.0"
+
+# OS を跨いで同じ版が欲しい CLI。**brew と apt の両方に書かないための逃がし先**が
+# ここ(README の3層の話)。yazi は Ubuntu の apt に無く、zoxide も古い。
+yazi = "26.5.6"
+zoxide = "0.10.0"
+# grep / find / cat の置き換え。**どれも .gitignore を尊重する**ので、
+# リポジトリの中で node_modules に結果を埋められない。
+ripgrep = "15.2.0"
+fd = "10.4.2"
+bat = "0.26.1"
+# fzf も brew/apt ではなくここ。**Ubuntu 24.04 の apt は 0.44.1** で、
+# `--zsh` を持たない古さのために .zshrc に専用の分岐が生えていた。
+fzf = "0.74.2"
+
+# ここに足したツールは macOS でも Ubuntu/WSL でも同じ版が入る。
+# **OS 別のパッケージリスト(~/.Brewfile と bootstrap の apt 節)を
+# 二重に保守しないための逃がし先**がここ。
+# 例: mise use -g ripgrep@latest

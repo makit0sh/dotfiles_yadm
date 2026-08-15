@@ -1,7 +1,16 @@
 " basic settings
 
 " turnoff vi compatibility if set
-if !&compatible
+"
+" 条件が逆だった(2026-08-15 修正)。`if !&compatible` は「既に非互換なら
+" 非互換にする」で、**互換モードで始まったときに何もしない**。
+"
+" 対話起動では vimrc が見つかった時点で Vim が自動的に nocompatible にするので
+" 表に出ないが、**`vim -u <file>` は compatible=1 で始まる**。その状態では
+" 行継続(行頭の `\`)が使えず、それを使っているプラグインが軒並み
+" 「E10: \ の後は / か ? か & でなければなりません」で読み込みに失敗する。
+" headless の PlugInstall が動かなかった原因がこれ。
+if &compatible
   set nocompatible
 endif
 
@@ -24,6 +33,9 @@ set smarttab
 set shiftwidth=4
 set tabstop=4
 set shiftwidth=2
+" 2026-08-15: airline を外したので、これを止めていた理由は無くなった。
+" 戻すと全角記号の幅の扱いが変わる(端末側の設定と揃える必要がある)ので、
+" 必要になったときに外すこと。
 "set ambiwidth=double "disabled because airline broke
 
 set nrformats-=octal
@@ -237,11 +249,19 @@ set tags=./tags;
 " https://github.com/junegunn/vim-plug
 
 " automatic installation
+"
+" 端末がある(= 人が起動した)ときだけ自動インストールする。`vim -es` などの
+" headless では &term が空になる —— そこで PlugInstall を仕掛けると、UI を
+" 出せないまま止まる。headless で入れたいときは bootstrap か、
+"   vim -es -u ~/.vimrc -c 'PlugInstall --sync' -c qa
+" のように明示的に呼ぶ。
 if empty(glob('~/.vim/autoload/plug.vim'))
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  silent !mkdir ~/.vim/plugged
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+  silent !mkdir -p ~/.vim/plugged
+  if !empty(&term)
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+  endif
 endif
 
 " plugins
@@ -250,114 +270,113 @@ endif
 " - Avoid using standard Vim directory names like 'plugin'
 silent! if plug#begin('~/.vim/plugged')
 
-Plug 'w0ng/vim-hybrid'
-Plug 'altercation/vim-colors-solarized'
-Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
-
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
-Plug 'easymotion/vim-easymotion'
-Plug 'junegunn/fzf'
-Plug 'ludovicchabant/vim-gutentags'
-Plug 'vim-scripts/taglist.vim'
-Plug 'majutsushi/tagbar'
-Plug 'airblade/vim-gitgutter'
-Plug 'osyo-manga/vim-anzu'
-Plug 'LeafCage/yankround.vim'
+" 2026-08-15: 30個 32MB から12個へ絞った。
+"
+" 主エディタは VSCode で、vim は「どの箱でも動く道具」として持つ、という
+" 前提に切り替えたのが理由。基準は3つ:
+"   - 外部バイナリに依存しない(ctags や python3 が要るものは、入っていない
+"     箱でただの死荷重になる)
+"   - 素の vim に無い機能であること(本体が持つようになったものは本体に任せる)
+"   - 新しい箱で PlugInstall が数秒で終わること
+"
+" 外したもの(理由):
+"   ultisnips, vim-snippets   12MB。+python3 が要る。スニペットは VSCode の仕事
+"   junegunn/fzf              3.5MB。vimrc に設定が無く、fzf 本体はシェル側にある
+"   emmet-vim, xml.vim, vim-css-color
+"                             web 専用。VSCode の領分
+"   vim-easymotion            2MB。設定が無く、/ と f で足りている
+"   vim-airline(+themes)     2.6MB。見た目。ambiwidth=double を壊した当人でもある
+"   vim-gutentags, tagbar     ctags バイナリが要る
+"   vim-gitgutter             1.5MB。あると便利、無くて困らない
+"   vim-fugitive              git CLI がある箱では要らない
+"   vim-abolish               使っていない
+"   vim-visual-star-search    数行で書けるものに1プラグイン
+"   vim-colors-solarized      Vim 9 の同梱 colorscheme で足りる
+"   auto-pairs                lisp/scheme/clojure 限定で、その用途が無くなった
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-unimpaired'
-Plug 'tpope/vim-abolish'
-Plug 'tpope/vim-fugitive'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-lastpat'
 Plug 'kana/vim-textobj-entire'
-Plug 'nelstrom/vim-visual-star-search'
-Plug 'editorconfig/editorconfig-vim'
+Plug 'osyo-manga/vim-anzu'
+Plug 'LeafCage/yankround.vim'
 Plug 'pseewald/vim-anyfold'
 Plug 'arecarn/vim-fold-cycle'
-
-Plug 'vim-scripts/xml.vim', {'for': ['xml']}
-Plug 'mattn/emmet-vim', {'for': ['html', 'css']}
-Plug 'ap/vim-css-color'
-
-Plug 'jiangmiao/auto-pairs', {'for': ['lisp', 'scheme', 'clojure']}
 
 " initialize plugin system
 call plug#end()
 endif
 
+" editorconfig は Vim 本体の同梱パッケージ(9.0.1799 以降)。
+" プラグイン版は 2026-08-15 に外した。
+if has('patch-9.0.1799')
+  packadd! editorconfig
+endif
+
 " colorscheme
-" use hybrid color scheme
+" Vim 9 同梱の habamax。solarized プラグインをやめたので本体のものを使う。
+" 古い vim には無いので、失敗しても止まらないように silent! を付ける。
 set background=dark
+silent! colorscheme habamax
 
-" let g:hybrid_custom_term_colors = 1 " eneble if your terminal using hybrid colorscheme
-" let g:hybrid_reduced_contrast = 1 " Remove this line if using the default pallete.
-" colorscheme hybrid
-colorscheme solarized
+" <Plug> への map は、プラグインが無いと**黙って無反応になる**。
+" 2026-08-15 に確認したところ、プラグイン未導入の状態では p / P / n / N / * / #
+" / <C-p> / <C-n> が全部死んでいた。貼り付けと検索が効かない vim になるので、
+" 新しいマシンや素の vimrc を持ち込んだ先で使い物にならない。
+"
+" 判定は「導入されているか」で行う。**`g:loaded_*` は使えない** —— プラグインの
+" 読み込みは vimrc を読み終えた後なので、この時点では必ず未定義になる
+" (最初にそれで書いて、実環境でも map が消えた)。
+function! s:HasPlug(name) abort
+  return isdirectory(expand('~/.vim/plugged/' . a:name))
+endfunction
 
-" for airline
-let g:airline_theme='solarized'
-let g:airline_solarized_bg='dark'
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#buffer_idx_mode = 1
-let g:airline#extensions#whitespace#mixed_indent_algo = 1
+" for vim-anzu(検索位置の表示)
+" Vim 8.1.1270 以降は 'shortmess' から S を外すだけで件数が出る。anzu が
+" 無いときはそれで代用する。
+" statusline は airline をやめたので自前。airline があった頃は
+" `set statusline=%{anzu#search_status()}` で足りていた(airline が上書き
+" していたため)が、今それをやると**検索状態しか出ない**行になる。
+set statusline=%f\ %m%r%h%w%=%{&filetype}\ %l/%L\ %P
+if s:HasPlug('vim-anzu')
+  nmap n <Plug>(anzu-n-with-echo)
+  nmap N <Plug>(anzu-N-with-echo)
+  nmap * <Plug>(anzu-star-with-echo)
+  nmap # <Plug>(anzu-sharp-with-echo)
+  set statusline=%f\ %m%r%h%w\ %{anzu#search_status()}%=%{&filetype}\ %l/%L\ %P
+elseif has('patch-8.1.1270')
+  set shortmess-=S
+endif
 
-" for UltiSnips
-" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
-let g:UltiSnipsExpandTrigger="<C-k>"
-let g:UltiSnipsJumpForwardTrigger="<C-j>"
-let g:UltiSnipsJumpBackwardTrigger="<C-b>"
-let g:UltiSnipsEditSplit="vertical"
-" directory for custom snippets
-let g:UltiSnipsSnippetsDir="~/.vim/UltiSnips"
-" filetypes
-autocmd FileType plaintex UltiSnipsAddFiletypes tex.plaintex
-
-" for vim-anzu
-" mapping
-nmap n <Plug>(anzu-n-with-echo)
-nmap N <Plug>(anzu-N-with-echo)
-nmap * <Plug>(anzu-star-with-echo)
-nmap # <Plug>(anzu-sharp-with-echo)
-" clear status
-" nmap <Esc><Esc> <Plug>(anzu-clear-search-status)
-" statusline
-set statusline=%{anzu#search_status()}
-
-" keymaps for yankround
-nmap p <Plug>(yankround-p)
-xmap p <Plug>(yankround-p)
-nmap P <Plug>(yankround-P)
-nmap gp <Plug>(yankround-gp)
-xmap gp <Plug>(yankround-gp)
-nmap gP <Plug>(yankround-gP)
-nmap <C-p> <Plug>(yankround-prev)
-nmap <C-n> <Plug>(yankround-next)
-
-" emmet setting
-" enable just for html/css
-let g:user_emmet_install_global = 0
-autocmd FileType html,css EmmetInstall
-
-"let g:user_emmet_mode='n'    "only enable normal mode functions.
-"let g:user_emmet_mode='inv'  "enable all functions, which is equal to
-let g:user_emmet_mode='a'    "enable all function in all mode.
-
-let g:user_emmet_leader_key='<C-Y>'
-
-" commentary settings
-" add comment type for new filetype
-" autocmd FileType apache setlocal commentstring=#\ %s
+" keymaps for yankround(ヤンク履歴)
+if s:HasPlug('yankround.vim')
+  nmap p <Plug>(yankround-p)
+  xmap p <Plug>(yankround-p)
+  nmap P <Plug>(yankround-P)
+  nmap gp <Plug>(yankround-gp)
+  xmap gp <Plug>(yankround-gp)
+  nmap gP <Plug>(yankround-gP)
+  nmap <C-p> <Plug>(yankround-prev)
+  nmap <C-n> <Plug>(yankround-next)
+endif
 
 " for vim-anyfold
 
 " activate anyfold by default
+"
+" `exists(':AnyFoldActivate')` を**発火時に**見る。理由は2つ:
+"   - プラグインが無い箱では、ファイルを開くたびに E492 が出ていた
+"     (<Plug> の map と同じ形の問題)
+"   - PlugInstall の最中は、まだ読み込まれていない状態で FileType が発火する。
+"     headless の PlugInstall が最後に exit 1 を返していた原因がこれ
 augroup anyfold
     autocmd!
-    autocmd Filetype * AnyFoldActivate
+    " `execute` を挟むのは必須。`AnyFoldActivate` は -bar 無しで定義された
+    " ユーザーコマンドなので、`| endif` が**引数として渡され** E488 になる。
+    autocmd Filetype * if exists(':AnyFoldActivate') | execute 'AnyFoldActivate' | endif
 augroup END
 
 " disable anyfold for large files
@@ -375,16 +394,14 @@ set foldlevel=99
 
 " for fold-cycle
 let g:fold_cycle_default_mapping = 0 "disable default mappings
-nmap <Tab><Tab> <Plug>(fold-cycle-open)
-nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
+if s:HasPlug('vim-fold-cycle')
+  nmap <Tab><Tab> <Plug>(fold-cycle-open)
+  nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
+endif
 
-" tagbar setting
-nmap <F8> :TagbarToggle<CR>
 
-" jiangmiao/auto-pairs setting
-
-"if exists("g:AutoPairs")
-  "default let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
-  let g:AutoPairs = {'(':')', '[':']', '{':'}','"':'"'}
-"endif
-
+" このマシンだけの設定。追跡外(~/.gitignore)なので、試したことが
+" `yadm diff` に出続けない。最後に読むので上のどれでも上書きできる。
+if filereadable(expand("~/.vimrc.local"))
+  source ~/.vimrc.local
+endif

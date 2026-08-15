@@ -1,82 +1,141 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# 新しいマシンで最初に一度だけ流す。`yadm bootstrap` で呼ばれる。
+#
+# 設計:
+#   - パッケージは「宣言」で持つ。macOS は ~/.Brewfile、Linux は下の apt 節。
+#     以前は brew と apt に同じようなリストを二重に手書きしていた。
+#   - **言語ランタイムとクロス OS の CLI は mise に寄せる**(~/.config/mise/
+#     config.toml)。ここに書けば macOS でも Ubuntu でも同じものが入るので、
+#     OS 別リストに足す理由が減る。
+#   - 何度流しても安全(冪等)であること。壊れた環境の修復にも使うため。
+#
+# 2026-08-15: asdf を廃止し mise へ。以前ここは asdf v0.14.1 を git clone して
+# いたが、それは .zshrc 側の移行と無言で食い違う類のもの。
+
+set -euo pipefail
 
 cd "$HOME"
+
+log() { printf '\n\033[1;34m==>\033[0m %s\n' "$*"; }
+
+log 'submodules'
 yadm submodule update --recursive --init
 
-mkdir -p ~/bin
+mkdir -p ~/bin ~/.local/bin
 
-# os package install
-if [ "$(uname)" == 'Darwin' ]; then
-  echo 'bootstrap for macOS'
+# --- OS ごとのパッケージ ----------------------------------------------------
 
-  if type brew > /dev/null 2>&1; then
-    brew update
-    brew install \
-      curl \
-      git \
-      wget \
-      vim \
-      universal-ctags \
-      tmux \
-      ranger \
-      starship \
-      fzf \
-      asdf \
-      coreutils
+case "$(uname)" in
+Darwin)
+  log 'bootstrap for macOS'
+  if ! command -v brew >/dev/null 2>&1; then
+    echo 'Homebrew がありません。https://brew.sh を先に入れてください。' >&2
+    exit 1
   fi
+  brew update
+  # 中身は ~/.Brewfile(yadm 管理)。何を入れるかの決定はそちらが持つ。
+  brew bundle --global
+  ;;
 
-elif [ "$(uname)" == 'Linux' ]; then
-  echo 'bootstrap for Linux'
-
-  # debian base system
-  if type apt > /dev/null 2>&1; then
+Linux)
+  log 'bootstrap for Linux'
+  if command -v apt >/dev/null 2>&1; then
+    # 何を入れるかの決定は ~/.config/apt/packages.txt が持つ(macOS 側の
+    # ~/.Brewfile に対応する)。apt には Brewfile に相当する標準形式が無いので
+    # 素のリストだが、得たいのは形式ではなく「宣言をスクリプトから分離する」性質。
+    packages=$(sed 's/#.*//' ~/.config/apt/packages.txt | tr -s '[:space:]' '\n' | grep -v '^$')
     sudo apt update
-    sudo apt install -y \
-      curl \
-      git \
-      vim \
-      universal-ctags \
-      zsh \
-      tmux \
-      fzf \
-      xsel \
-      ranger \
-      w3m-img \
-      atool \
-      caca-utils \
-      lynx \
-      highlight \
-      mediainfo \
-      poppler-utils
+    # shellcheck disable=SC2086
+    sudo apt install -y $packages
   fi
 
-  # install fonts
+  # フォント(Cica)。既に入っていれば何もしない。
   mkdir -p ~/.local/share/fonts
-  cd ~/.local/share/fonts
-  if [ ! -e "Cica-Regular.ttf" ]; then
-    curl -s https://api.github.com/repos/miiton/Cica/releases/latest \
-      | grep browser_download_url \
-      | grep -v _without_emoji.zip \
-      | head -n 1 \
-      | cut -d '"' -f 4 \
-      | wget -qi -
-    unzip Cica_*.zip "*.ttf"
-    rm -f Cica_*.zip
+  if [ ! -e ~/.local/share/fonts/Cica-Regular.ttf ]; then
+    log 'installing Cica font'
+    (
+      cd ~/.local/share/fonts
+      curl -s https://api.github.com/repos/miiton/Cica/releases/latest |
+        grep browser_download_url |
+        grep -v _without_emoji.zip |
+        head -n 1 |
+        cut -d '"' -f 4 |
+        wget -qi -
+      unzip -o Cica_*.zip "*.ttf"
+      rm -f Cica_*.zip
+    )
   fi
-  cd ~
 
-  # install starship
-  curl -fsSL https://starship.rs/install.sh | sh
+  # macOS では brew が入れるもの。Linux では apt に無い/古いので個別に。
+  if ! command -v starship >/dev/null 2>&1; then
+    log 'installing starship'
+    curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
+  fi
+  if ! command -v mise >/dev/null 2>&1; then
+    log 'installing mise'
+    curl -fsSL https://mise.run | sh
+  fi
+  ;;
+esac
 
+# --- ランタイムとクロス OS の CLI -------------------------------------------
+
+log 'mise tools'
+export PATH="$HOME/.local/bin:$PATH"
+if command -v mise >/dev/null 2>&1; then
+  # ~/.config/mise/config.toml の [tools] を入れる。OS を跨いで同じ版が入る
+  # のがここの利点で、apt と brew のリストを二重に保守しなくてよくなる。
+  mise install
+else
+  echo 'mise が入りませんでした。手で入れてから再実行してください。' >&2
 fi
 
-echo 'installing asdf'
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
+# --- エディタ ---------------------------------------------------------------
 
 if command -v vim >/dev/null 2>&1; then
-  echo "Bootstraping Vim"
-  vim '+PlugUpdate' '+PlugClean!' '+PlugUpdate' '+qall'
+  log 'vim plugins'
+  # vim-plug 本体が無ければ取ってくる(以前は前提にしていた)。
+  if [ ! -e ~/.vim/autoload/plug.vim ]; then
+    curl -fsSLo ~/.vim/autoload/plug.vim --create-dirs \
+      https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  fi
+  # ここは2026-08-15 に2回直している。
+  #
+  # 1回目: 元は `vim '+PlugUpdate' ... '+qall'` で、**TTY が無いと永久に待つ**。
+  #   Ubuntu コンテナで19分ハングして bootstrap が先へ進まなかった。
+  #   非対話の形は `-es`(サイレント ex モード)+ `--sync`(完了までブロック)。
+  #
+  # 2回目: それでも exit 1 を返し続けていた。**中身は成功していて、終了コード
+  #   だけが失敗**という一番たちの悪い形で、原因は vimrc 側に2つあった
+  #   (`if !&compatible` の条件が逆で headless が vi 互換のまま動いていた件と、
+  #   未読込の AnyFoldActivate を autocmd が呼んでいた件)。どちらも直したので、
+  #   ここは失敗を素直に失敗として扱ってよい。
+  if timeout 600 vim -es -u ~/.vimrc -i NONE \
+    -c 'PlugInstall --sync' -c 'PlugClean!' -c 'qa' </dev/null >/dev/null 2>&1; then
+    echo "vim plugins: $(ls ~/.vim/plugged 2>/dev/null | wc -l | tr -d ' ') installed"
+  else
+    echo 'vim plugins: FAILED (run `vim -es -u ~/.vimrc -c "PlugInstall --sync" -c qa` to see why)'
+  fi
 fi
 
-zsh
+# --- 仕上げ -----------------------------------------------------------------
 
+echo
+echo 'bootstrap 完了。残りは手で:'
+echo
+
+# class は github_yadm_bootstrap.sh 経由なら設定済みで、bootstrap を単体で
+# 叩いたときだけ未設定になる。両方で同じ文言を出すと、one-liner の直後に
+# 「class を設定しろ」と「class は personal にした」が並んで矛盾して見える。
+if class=$(yadm config local.class 2>/dev/null) && [ -n "$class" ]; then
+  echo "  - class は \"$class\"(設定済み)。変えるなら:"
+  echo "      yadm config local.class work && yadm alt"
+else
+  echo '  - class を決める(##class.* のファイルはこれを見て展開される):'
+  echo '      yadm config local.class personal   # 仕事マシンなら work'
+  echo '      yadm alt'
+fi
+echo '  - 新しいシェルを開く(mise の activation が入る)'
+echo '  - gh auth login / claude のログイン'
+echo

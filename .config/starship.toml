@@ -3,3 +3,55 @@ add_newline = true
 [time]
 disabled = false
 
+# --- 終了コードを数字で出す ---------------------------------------------------
+#
+# 既定では `❯` が赤くなるだけで値は出ない。**「失敗した」と「何もしなかった」を
+# 区別したい**場面があるので数字まで出す(2026-08-15 に `rm -i` が TTY 無しで
+# 何も消さずに 0 を返す件を踏んだ。ああいうときに欲しいのは色ではなく値)。
+[status]
+disabled = false
+format = '[$status]($style) '
+style = 'bold red'
+map_symbol = false
+
+# --- ランタイム版は「黙っているのが正常」にする -------------------------------
+#
+# 既定の nodejs / python モジュールは**常に版を出す**。常に出ているものは読まれ
+# ないので、情報としては消えているのとあまり変わらない。代わりに下の custom で
+# **食い違ったときだけ**出す。
+[nodejs]
+disabled = true
+
+[python]
+disabled = true
+
+# node が、そのディレクトリの要求と違うときだけ警告する。
+#
+# 一致していれば何も出さない。**普段は完全に黙っていて、おかしいときだけ喋る**の
+# が狙い。実際に踏んだのは 2026-08-15、リポジトリの外で node 22.11.0 に落ちて
+# pnpm が起動を拒否した件。そのときプロンプトは版を表示していたのに、
+# 「それが違う版だ」とはどこにも書いていなかった。
+#
+# コストは mise 呼び出しが実測 10ms。プロンプト全体が 20ms なので、
+# **黙っている情報にこれ以上払わない**という基準で対象は node だけにしてある。
+[custom.node_version_mismatch]
+description = "Warn only when the running node differs from what this directory asks for"
+# 記号は format ではなく**出力側**に置く。format に固定文字列を書くと、
+# 出力が空でもその文字列は描画されるので、一致していても ⚠ が出てしまう。
+# **要求された版が未インストールのときは node が PATH から消える**ので、
+# 「actual が取れなかった」を無言で見逃してはいけない。実測ではそこが一番
+# 気づきにくい壊れ方だった(`node -v` が空を返し、コマンドは 127 で落ちる)。
+command = '''
+expected=$(mise current node 2>/dev/null) || exit 0
+[ -n "$expected" ] || exit 0
+actual=$(node -v 2>/dev/null | sed 's/^v//')
+if [ -z "$actual" ]; then
+  printf '⚠ node %s not installed ' "$expected"
+elif [ "$expected" != "$actual" ]; then
+  printf '⚠ node %s != %s ' "$actual" "$expected"
+fi
+'''
+when = true
+shell = ["sh"]
+style = "bold red"
+format = '[$output]($style)'
