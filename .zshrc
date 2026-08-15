@@ -1,3 +1,27 @@
+#
+# 人間が打っているのか、エージェントが走らせているのか(以降で使うので最初に)
+#
+# Claude Code はこのファイルを読んだシェルのスナップショット
+# (~/.claude/shell-snapshots/、2026-08 の実測で 8,816行・alias 16個)を作り、
+# 以後のコマンドをその上で走らせる。つまり **ここに書いた alias と関数は
+# エージェントの実行にそのまま乗る**。
+#
+# **判定は best-effort。** AI_AGENT を付けるのは Claude Code で、VSCode の
+# Copilot は付けない。しかも VSCode の統合ターミナルでは「Copilot が動かした」と
+# 「人が打っている」を環境変数で区別できない(2026-08 時点。未確認)。
+#
+# したがって規則はこう:
+#   - **外れると壊れるものを、この分岐の下に置かない。** 破壊的な alias
+#     (`rm -i` など)や `cd` の上書きは、判定に関係なく撤去する
+#   - この分岐に置いてよいのは、**外れても「起動が少し重い」で済むもの**だけ
+#
+# ZSH_HUMAN=0 を手で作れば、人間のシェルでもエージェント相当に落とせる。
+if [[ -n "$AI_AGENT" || -n "$CLAUDE_CODE_ENTRYPOINT" || -n "$CLAUDECODE" ]]; then
+  ZSH_HUMAN=0
+else
+  ZSH_HUMAN=1
+fi
+
 ##? Clone a plugin, identify its init file, source it, and add it to your fpath.
 # borrowed from https://github.com/mattmc3/zsh_unplugged
 function plugin-load {
@@ -25,15 +49,18 @@ function plugin-load {
 autoload is-at-least
 
 # Set up fzf key bindings and fuzzy completion
-if is-at-least 0.48 $(fzf --version); then
-  source <(fzf --zsh)
-else
-  # for ubuntu version older than 0.48.0
-  if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
-    source /usr/share/doc/fzf/examples/key-bindings.zsh
-  fi
-  if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
-    source /usr/share/doc/fzf/examples/completion.zsh
+# (キーバインドと補完なので人間のときだけ。fzf 自体はコマンドとして常に使える)
+if (( ZSH_HUMAN )); then
+  if is-at-least 0.48 $(fzf --version); then
+    source <(fzf --zsh)
+  else
+    # for ubuntu version older than 0.48.0
+    if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
+      source /usr/share/doc/fzf/examples/key-bindings.zsh
+    fi
+    if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
+      source /usr/share/doc/fzf/examples/completion.zsh
+    fi
   fi
 fi
 
@@ -51,17 +78,19 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 #
-# plugins from github
+# plugins from github(打鍵の補助なので人間のときだけ)
 #
-repos=(
-  zsh-users/zsh-autosuggestions
-  zsh-users/zsh-completions
-  zsh-users/zsh-syntax-highlighting
-  Aloxaf/fzf-tab
-  trapd00r/LS_COLORS
-)
+if (( ZSH_HUMAN )); then
+  repos=(
+    zsh-users/zsh-autosuggestions
+    zsh-users/zsh-completions
+    zsh-users/zsh-syntax-highlighting
+    Aloxaf/fzf-tab
+    trapd00r/LS_COLORS
+  )
 
-plugin-load $repos
+  plugin-load $repos
+fi
 
 
 # alias
@@ -80,13 +109,28 @@ alias l='ls'
 alias ll='ls -hl'
 alias la='ls -a'
 alias lla='ls -la'
-alias mv="mv -i"
-alias rm='rm -i'
 alias vi='vim'
-# auto ls after cd
-function cd(){
-  builtin cd $@ && ls;
-}
+
+# `rm -i` / `mv -i` は撤去した(2026-08-15)。
+#
+# エージェントの実行には TTY が無いので、`-i` の確認プロンプトは EOF を読んで
+# **「no」と解釈され、削除も上書きもせずに終了コード 0 を返す**。つまり
+# エージェントは「消した」と報告し、ファイルは残る。**黙って間違った結果を出す**
+# ので、ハングするより悪い。
+#
+# 人間に対しても `-i` は効いていない — 打鍵の速い人は確認に反射で y を打つ。
+# うっかりを本当に防ぎたいなら、確認を挟むのではなく**戻せる場所に送る**こと。
+# (`trash` 系コマンドを別名で足す案。今は入れていない)
+
+# auto ls after cd — 人間のときだけ。
+#
+# 以前は `function cd(){ builtin cd $@ && ls; }` で cd 自体を上書きしていた。
+# 関数はスナップショットに入るので、**エージェントの `cd` が毎回ディレクトリ
+# 一覧を吐き**、本当の出力がその中に埋もれていた。chpwd フックなら cd の意味を
+# 変えないし、この分岐が外れても害は「一覧が出る」だけで済む。
+if (( ZSH_HUMAN )); then
+  function chpwd() { ls }
+fi
 
 # bahavior
 setopt no_beep
@@ -103,13 +147,15 @@ setopt HIST_IGNORE_ALL_DUPS # Delete an old recorded event if a new event is a d
 setopt SHARE_HISTORY
 setopt HIST_IGNORE_SPACE # Do not record an event starting with a space.
 
-# vi like keybinds
-bindkey -v
-export KEYTIMEOUT=1 # kill the lag
-bindkey "^W" backward-kill-word    # vi-backward-kill-word
-bindkey "^H" backward-delete-char  # vi-backward-delete-char
-bindkey "^U" kill-line             # vi-kill-line
-bindkey "^?" backward-delete-char  # vi-backward-delete-char
+# vi like keybinds(打鍵の話なので人間のときだけ)
+if (( ZSH_HUMAN )); then
+  bindkey -v
+  export KEYTIMEOUT=1 # kill the lag
+  bindkey "^W" backward-kill-word    # vi-backward-kill-word
+  bindkey "^H" backward-delete-char  # vi-backward-delete-char
+  bindkey "^U" kill-line             # vi-kill-line
+  bindkey "^?" backward-delete-char  # vi-backward-delete-char
+fi
 
 # changing directories
 setopt AUTO_CD
@@ -147,16 +193,18 @@ setopt NOMATCH
 autoload -Uz colors
 colors
 
-# history search 
-autoload -Uz history-search-end
-zle -N history-beginning-search-backward-end history-search-end
-zle -N history-beginning-search-forward-end history-search-end
-bindkey "^P" history-beginning-search-backward-end
-bindkey "^N" history-beginning-search-forward-end
-# bindkey "^R" history-incremental-search-backward
-bindkey "^S" history-incremental-search-forward
-bindkey "^[[A" history-beginning-search-backward-end
-bindkey "^[[B" history-beginning-search-forward-end
+# history search(zle = 行編集なので、そもそも人間のときしか意味がない)
+if (( ZSH_HUMAN )); then
+  autoload -Uz history-search-end
+  zle -N history-beginning-search-backward-end history-search-end
+  zle -N history-beginning-search-forward-end history-search-end
+  bindkey "^P" history-beginning-search-backward-end
+  bindkey "^N" history-beginning-search-forward-end
+  # bindkey "^R" history-incremental-search-backward
+  bindkey "^S" history-incremental-search-forward
+  bindkey "^[[A" history-beginning-search-backward-end
+  bindkey "^[[B" history-beginning-search-forward-end
+fi
 
 # Automatically change the directory in bash after closing ranger
 #
@@ -176,7 +224,9 @@ function ranger-cd {
 }
 
 # This binds Ctrl-O to ranger-cd:
-bindkey -s '^o' 'ranger-cd^M'
+if (( ZSH_HUMAN )); then
+  bindkey -s '^o' 'ranger-cd^M'
+fi
 
 # add bin in home dir to path
 export PATH=~/.local/bin:~/bin:$PATH

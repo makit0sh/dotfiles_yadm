@@ -39,7 +39,7 @@ brew "yadm"      # この dotfiles 自身を管理している
 # node / pnpm / python は mise(~/.config/mise/config.toml)が持つ。
 # poetry は uv に置き換えたので削除。gcc / libomp / pkgconf / zlib も外した —
 # 要るのは特定のプロジェクトをビルドするときで、そのときは依存として入る。
-brew "python-tk@3.14" # tkinter。mise の python から使うなら tcl-tk 側の手当てが要る
+# python-tk も外した(tkinter を使わなくなったため)。
 
 # --- ネットワーク・ファイル -------------------------------------------------
 brew "curl"
