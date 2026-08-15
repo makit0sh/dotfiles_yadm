@@ -23,6 +23,9 @@ zoxide = "0.10.0"
 ripgrep = "15.2.0"
 fd = "10.4.2"
 bat = "0.26.1"
+# fzf も brew/apt ではなくここ。**Ubuntu 24.04 の apt は 0.44.1** で、
+# `--zsh` を持たない古さのために .zshrc に専用の分岐が生えていた。
+fzf = "0.74.2"
 
 # ここに足したツールは macOS でも Ubuntu/WSL でも同じ版が入る。
 # **OS 別のパッケージリスト(~/.Brewfile と bootstrap の apt 節)を

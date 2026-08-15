@@ -81,23 +81,18 @@ function plugin-update {
   echo "done. open a new shell to pick them up."
 }
 
-# version compare
-autoload is-at-least
-
-# Set up fzf key bindings and fuzzy completion
-# (キーバインドと補完なので人間のときだけ。fzf 自体はコマンドとして常に使える)
-if (( ZSH_HUMAN )); then
-  if is-at-least 0.48 $(fzf --version); then
-    source <(fzf --zsh)
-  else
-    # for ubuntu version older than 0.48.0
-    if [ -e /usr/share/doc/fzf/examples/key-bindings.zsh ] ; then
-      source /usr/share/doc/fzf/examples/key-bindings.zsh
-    fi
-    if [ -e /usr/share/doc/fzf/examples/completion.zsh ] ; then
-      source /usr/share/doc/fzf/examples/completion.zsh
-    fi
-  fi
+# fzf のキーバインドと補完(人間のときだけ。fzf 自体はコマンドとして常に使える)
+#
+# ここには以前「fzf が 0.48 より古ければ /usr/share/doc/fzf/examples/ を読む」
+# という分岐があった。**その分岐が必要だった理由は apt の fzf が古いこと**で
+# (Ubuntu 24.04 は 0.44.1、mise は 0.74.2)、fzf を mise に移した時点で
+# 前提ごと消えたので分岐も消した。
+#
+# **存在確認は残す。** 2026-08-15 に Ubuntu コンテナで実測したとき、apt の
+# リストから fzf を落としていたせいで `fzf --version` が command not found に
+# なり、シェル起動のたびにエラーが2行出ていた。
+if (( ZSH_HUMAN )) && command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
 fi
 
 #

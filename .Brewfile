@@ -16,8 +16,9 @@ brew "mise"      # 言語ランタイム。.tool-versions を読む(asdf の後�
 
 # --- シェル環境 -------------------------------------------------------------
 brew "starship"  # プロンプト
-brew "fzf"       # 曖昧検索。zshrc の key-bindings と fzf-tab が依存
 brew "tmux"
+# fzf は mise 側。apt の fzf が古すぎて(24.04 で 0.44.1)OS ごとに版が割れ、
+# .zshrc に古い版用の分岐を生やしていたため。
 brew "coreutils" # GNU 版。BSD 版との差でスクリプトが割れるのを避ける
 brew "gawk"
 brew "tree"
