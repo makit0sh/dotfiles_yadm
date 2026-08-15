@@ -16,9 +16,17 @@ export PATH
 # 以後のコマンドをその上で走らせる。つまり **ここに書いた alias と関数は
 # エージェントの実行にそのまま乗る**。
 #
-# **判定は best-effort。** AI_AGENT を付けるのは Claude Code で、VSCode の
-# Copilot は付けない。しかも VSCode の統合ターミナルでは「Copilot が動かした」と
-# 「人が打っている」を環境変数で区別できない(2026-08 時点。未確認)。
+# 判定は2段構え。
+#
+#   1. **TTY があるか。** 2026-08-15 に実測したところ、Claude Code のシェルは
+#      stdin/stdout/stderr のどれも端末ではなかった。「人が打っている」とは
+#      文字どおり「端末がある」ことなので、これが一番素直で、**どのエージェント
+#      にも効く**(env 変数を付けてくれないツールにも効く)。CI・cron・
+#      ssh の単発実行も同じ側に落ちる。
+#   2. **既知のエージェント env。** PTY を割り当ててくるツール向けの補強。
+#
+# **それでも best-effort。** VSCode の統合ターミナルで Copilot が動かす場合、
+# 端末は人が打つときと同じものなので、この2つでは区別できない(未確認)。
 #
 # したがって規則はこう:
 #   - **外れると壊れるものを、この分岐の下に置かない。** 破壊的な alias
@@ -26,7 +34,8 @@ export PATH
 #   - この分岐に置いてよいのは、**外れても「起動が少し重い」で済むもの**だけ
 #
 # ZSH_HUMAN=0 を手で作れば、人間のシェルでもエージェント相当に落とせる。
-if [[ -n "$AI_AGENT" || -n "$CLAUDE_CODE_ENTRYPOINT" || -n "$CLAUDECODE" ]]; then
+if [[ ! -t 0 ]] ||
+  [[ -n "$AI_AGENT" || -n "$CLAUDE_CODE_ENTRYPOINT" || -n "$CLAUDECODE" ]]; then
   ZSH_HUMAN=0
 else
   ZSH_HUMAN=1
