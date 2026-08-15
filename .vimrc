@@ -374,7 +374,9 @@ endif
 "     headless の PlugInstall が最後に exit 1 を返していた原因がこれ
 augroup anyfold
     autocmd!
-    autocmd Filetype * if exists(':AnyFoldActivate') | AnyFoldActivate | endif
+    " `execute` を挟むのは必須。`AnyFoldActivate` は -bar 無しで定義された
+    " ユーザーコマンドなので、`| endif` が**引数として渡され** E488 になる。
+    autocmd Filetype * if exists(':AnyFoldActivate') | execute 'AnyFoldActivate' | endif
 augroup END
 
 " disable anyfold for large files
