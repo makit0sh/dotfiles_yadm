@@ -1,0 +1,8 @@
+# This is Git's per-user configuration file.
+[user]
+# Please adapt and uncomment the following lines:
+name = makit0sh
+email = t.maki.0402@gmail.com
+
+[core]
+	ignorecase = false

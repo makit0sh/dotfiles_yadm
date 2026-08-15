@@ -1,0 +1,16 @@
+# グローバル指示(work マシン)
+
+**このファイルは中身を持たない。** 実体は `~/.config/ai/` にあり、ここは
+「このマシンではどれを読むか」だけを決める(`##class.personal` と同じ立て付け)。
+
+@~/.config/ai/core.md
+@~/.config/ai/stacks/cpp-embedded.md
+@~/.config/ai/stacks/ros2.md
+@~/.config/ai/stacks/linux-kernel.md
+
+---
+
+**雇用主固有のものはこの経路に乗せない。** `~/.config/ai/` は個人の GitHub
+リポジトリで同期されている。社内規約・社内ツール・製品名・コード片が要るなら、
+職場のリポジトリの `AGENTS.md` か、yadm の追跡外に置いたファイルを
+このファイルではなく**プロジェクト側から** import すること。

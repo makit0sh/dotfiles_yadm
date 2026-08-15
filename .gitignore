@@ -1,0 +1,38 @@
+# yadm のワークツリーは $HOME なので、`yadm add ~/.claude` のような取り違えが
+# 起きうる。危険なものは明示的に閉める。git は追加したものしか追跡しないので
+# 本来は不要だが、**事故の規模が大きすぎる**ものだけ書いておく。
+
+# Claude Code の会話ログ。2026-08 時点で 1.3GB あり、機微な内容も入る。
+.claude/projects/
+.claude/sessions/
+.claude/history.jsonl
+.claude/shell-snapshots/
+.claude/todos/
+.claude/tasks/
+.claude/plans/
+.claude/statsig/
+.claude/cache/
+.claude/telemetry/
+.claude/file-history/
+.claude/downloads/
+.claude/uploads/
+.claude/backups/
+.claude/debug/
+.claude/ide/
+.claude/session-env/
+.claude/chrome/
+.claude/plugins/
+.claude/*.json
+!.claude/settings.json
+.claude/settings.local.json
+
+# 認証情報
+.ssh/
+.aws/
+.netrc
+.config/gh/hosts.yml
+
+# 各種キャッシュ
+.cache/
+.local/share/mise/
+.config/zsh/plugins/

@@ -38,10 +38,17 @@ else
 fi
 
 #
-# asdf
+# mise (replaced asdf on 2026-08-15)
 #
-export ASDF_DATA_DIR="${HOME}/.asdf"
-export PATH="$ASDF_DATA_DIR/shims:$PATH"
+# asdf resolved tools through ~/.asdf/shims, a relay script, so `which node`
+# never named the real binary. That opacity had real cost: repos carried
+# workarounds that prepended an absolute install path ahead of the shims, and
+# running pnpm outside a project dropped to whatever global asdf happened to
+# have. mise rewrites PATH instead, reads the same .tool-versions files, and
+# installs the same way on macOS and Linux.
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
+fi
 
 #
 # plugins from github
@@ -109,6 +116,11 @@ setopt AUTO_CD
 setopt AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
 
 # completion
+# fpath has to be complete BEFORE compinit runs — anything appended afterwards
+# is invisible to it. Docker Desktop appends its own block at the end of this
+# file and then calls compinit a second time to compensate; the entry is folded
+# in here instead so there is one compinit.
+[[ -d ~/.docker/completions ]] && fpath=(~/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 zstyle ':completion:*:default' menu select=1
@@ -167,9 +179,11 @@ function ranger-cd {
 bindkey -s '^o' 'ranger-cd^M'
 
 # add bin in home dir to path
-export PATH=~/.local/bin:$PATH
-export PATH=~/bin:$PATH
+export PATH=~/.local/bin:~/bin:$PATH
 
 # use starship prompt
 eval "$(starship init zsh)"
 
+# NOTE: Docker Desktop likes to append a completions block here. It is already
+# handled above (see the fpath line before compinit) — delete the appended copy
+# rather than keeping two compinit calls.

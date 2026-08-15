@@ -148,3 +148,5 @@ tags
 # Persistent undo
 [._]*.un~
 
+
+**/.claude/settings.local.json

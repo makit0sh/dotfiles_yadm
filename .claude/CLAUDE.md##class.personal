@@ -1,0 +1,20 @@
+# グローバル指示(personal マシン)
+
+**このファイルは中身を持たない。** 実体は `~/.config/ai/` にあり、ここは
+「このマシンではどれを読むか」だけを決める。
+
+理由: 同じ指示を Claude Code と VSCode の Copilot の両方から参照したいが、
+VSCode の Settings Sync は VSCode の中しか運べない。共有したい実体を外に出して
+両方から指させるほうが、同期機構を統一しようとするより壊れにくい。
+
+class ごとにこのファイルが差し替わる(yadm alt)。personal は macOS と WSL2 の
+個人開発機で、仕事機は `##class.work` のほうを見る。
+
+@~/.config/ai/core.md
+@~/.config/ai/stacks/node-web.md
+
+---
+
+プロジェクト固有の規約は各リポジトリの `AGENTS.md` / `CLAUDE.md` が持つ。
+このマシンで C++ を触るときは、そのプロジェクトの `CLAUDE.md` から
+`@~/.config/ai/stacks/cpp-embedded.md` を足す。
