@@ -18,6 +18,11 @@ pnpm = "11.15.0"
 # ここ(README の3層の話)。yazi は Ubuntu の apt に無く、zoxide も古い。
 yazi = "26.5.6"
 zoxide = "0.10.0"
+# grep / find / cat の置き換え。**どれも .gitignore を尊重する**ので、
+# リポジトリの中で node_modules に結果を埋められない。
+ripgrep = "15.2.0"
+fd = "10.4.2"
+bat = "0.26.1"
 
 # ここに足したツールは macOS でも Ubuntu/WSL でも同じ版が入る。
 # **OS 別のパッケージリスト(~/.Brewfile と bootstrap の apt 節)を

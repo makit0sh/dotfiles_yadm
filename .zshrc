@@ -1,12 +1,12 @@
+# PATH は ~/.zshenv が通す(このファイルより先に、非対話シェルでも読まれる)。
 #
-# PATH は最初に通す。
-#
-# 以前はファイル末尾で export していたが、**mise を探すのはこのファイルの途中**
-# なので順序が逆だった。macOS では mise が /opt/homebrew/bin(既定で PATH 上)に
-# 入るので偶然動いていただけで、**Linux では bootstrap が ~/.local/bin に入れる**
-# ため、activate が一度も走らない経路になっていた(2026-08-15 に発見。手元に
-# Linux が無いので実測ではなく経路からの判断)。
-export PATH=~/.local/bin:~/bin:$PATH
+# macOS のログインシェルでは /etc/zprofile の path_helper が .zshenv の**後**に
+# 走って PATH を組み直すため、ここで一度だけ順序を戻す。順序が要るのは mise の
+# shims と ~/.local/bin で、システムの同名コマンドに負けてはいけないもの。
+typeset -U path PATH
+path=(~/.local/bin ~/bin $path)
+[[ -d ~/.local/share/mise/shims ]] && path=(~/.local/share/mise/shims $path)
+export PATH
 
 #
 # 人間が打っているのか、エージェントが走らせているのか(以降で使うので最初に)
@@ -176,16 +176,27 @@ fi
 setopt no_beep
 
 # history
-HISTFILE="$HOME/.zsh_history"
+#
+# **エージェントのコマンドは履歴に残さない。** SHARE_HISTORY と
+# INC_APPEND_HISTORY があると、エージェントが走らせた1コマンドごとに
+# ~/.zsh_history へ書き込まれ、開いている他の端末にも共有される。2026-08-15 の
+# 1セッションで数百件入り、**自分が打ったものを Ctrl-P で辿れなくなった**。
+#
+# HISTFILE を持たせないだけで、読み書きの両方が止まる。エージェントが何をしたか
+# は各エージェント側のログ(~/.claude/projects 等)に残るので、失うものは無い。
 export HISTSIZE=10000
 export SAVEHIST=10000
-setopt EXTENDED_HISTORY
-setopt INC_APPEND_HISTORY
-setopt HIST_EXPIRE_DUPS_FIRST    # Expire a duplicate event first when trimming history.
 setopt HIST_IGNORE_DUPS          # Do not record an event that was just recorded again.
-setopt HIST_IGNORE_ALL_DUPS # Delete an old recorded event if a new event is a duplicate.
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_SPACE # Do not record an event starting with a space.
+setopt HIST_IGNORE_ALL_DUPS      # Delete an old recorded event if a new event is a duplicate.
+setopt HIST_IGNORE_SPACE         # Do not record an event starting with a space.
+if (( ZSH_HUMAN )); then
+  HISTFILE="$HOME/.zsh_history"
+  setopt EXTENDED_HISTORY
+  setopt INC_APPEND_HISTORY
+  setopt SHARE_HISTORY
+else
+  unset HISTFILE
+fi
 
 # vi like keybinds(打鍵の話なので人間のときだけ)
 if (( ZSH_HUMAN )); then
