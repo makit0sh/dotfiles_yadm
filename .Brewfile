@@ -11,8 +11,6 @@
 # macOS 専用。Linux/WSL 側のパッケージは ~/.config/yadm/bootstrap の apt 節。
 # OS を跨いで欲しい CLI は、できるだけ mise(~/.default-tools)に寄せる。
 
-tap "supabase/tap"
-
 # --- ランタイム管理 ---------------------------------------------------------
 brew "mise"      # 言語ランタイム。.tool-versions を読む(asdf の後継)
 
@@ -36,14 +34,12 @@ brew "gh"
 brew "yadm"      # この dotfiles 自身を管理している
 
 # --- 開発 -------------------------------------------------------------------
-brew "node"      # mise が per-project の node を持つが、素の node も残す
-brew "pnpm"
-brew "poetry"
-brew "gcc"
-brew "libomp"
-brew "pkgconf"
-brew "zlib"
-brew "python-tk@3.13"
+# **ランタイムとその周辺をここに置かない。** プロジェクトごとに版が違うものを
+# グローバルに固定すると、どのプロジェクトにも合わない版が1つ残るだけになる。
+# node / pnpm / python は mise(~/.config/mise/config.toml)が持つ。
+# poetry は uv に置き換えたので削除。gcc / libomp / pkgconf / zlib も外した —
+# 要るのは特定のプロジェクトをビルドするときで、そのときは依存として入る。
+brew "python-tk@3.14" # tkinter。mise の python から使うなら tcl-tk 側の手当てが要る
 
 # --- ネットワーク・ファイル -------------------------------------------------
 brew "curl"
