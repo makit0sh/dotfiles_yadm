@@ -1,4 +1,14 @@
 #
+# PATH は最初に通す。
+#
+# 以前はファイル末尾で export していたが、**mise を探すのはこのファイルの途中**
+# なので順序が逆だった。macOS では mise が /opt/homebrew/bin(既定で PATH 上)に
+# 入るので偶然動いていただけで、**Linux では bootstrap が ~/.local/bin に入れる**
+# ため、activate が一度も走らない経路になっていた(2026-08-15 に発見。手元に
+# Linux が無いので実測ではなく経路からの判断)。
+export PATH=~/.local/bin:~/bin:$PATH
+
+#
 # 人間が打っているのか、エージェントが走らせているのか(以降で使うので最初に)
 #
 # Claude Code はこのファイルを読んだシェルのスナップショット
@@ -126,7 +136,11 @@ alias cddd="cd ../../"
 alias cdddd="cd ../../../"
 alias ...='cd ../..'
 alias ....='cd ../../..'
-if [[ "$(uname)" == "Darwin" ]]; then
+# macOS の BSD ls ではなく GNU ls(coreutils の gls)を使う。
+# **存在確認をしてから alias する。** 無いまま alias すると `ls` が丸ごと壊れ、
+# しかも chpwd フックが毎回 cd で呼ぶので、エラーが常時出る状態になる。
+# 実際 2026-08-15 に `gls: cannot access ...` という形で表に出た。
+if command -v gls >/dev/null 2>&1; then
   alias ls='gls --color=auto'
 else
   alias ls='ls --color=auto'
@@ -227,6 +241,9 @@ if (( ZSH_HUMAN )); then
   bindkey "^P" history-beginning-search-backward-end
   bindkey "^N" history-beginning-search-forward-end
   # bindkey "^R" history-incremental-search-backward
+  # Ctrl-S は端末のフロー制御(XOFF)に取られていて、そのままだと押した瞬間に
+  # 端末が固まる。バインドを効かせるには先に無効化が要る。
+  stty -ixon 2>/dev/null
   bindkey "^S" history-incremental-search-forward
   bindkey "^[[A" history-beginning-search-backward-end
   bindkey "^[[B" history-beginning-search-forward-end
@@ -264,11 +281,15 @@ if (( ZSH_HUMAN )); then
   fi
 fi
 
-# add bin in home dir to path
-export PATH=~/.local/bin:~/bin:$PATH
+# PATH はファイル冒頭で通してある(mise を探すより前でなければならないため)。
 
 # use starship prompt
-eval "$(starship init zsh)"
+# エージェントはプロンプトを描画しないので、初期化する意味が無いどころか、
+# precmd フックが毎コマンド走って custom モジュール(mise 呼び出し)のぶん
+# 無駄に払うことになる。
+if (( ZSH_HUMAN )) && command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
 
 # NOTE: Docker Desktop likes to append a completions block here. It is already
 # handled above (see the fpath line before compinit) — delete the appended copy
