@@ -6,3 +6,7 @@ email = t.maki.0402@gmail.com
 
 [core]
 	ignorecase = false
+
+[include]
+	# このマシンだけの設定(追跡外)。git は存在しない include を黙って無視する。
+	path = ~/.gitconfig.local

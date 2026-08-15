@@ -309,3 +309,8 @@ fi
 # NOTE: Docker Desktop likes to append a completions block here. It is already
 # handled above (see the fpath line before compinit) — delete the appended copy
 # rather than keeping two compinit calls.
+
+# このマシンだけの設定。yadm の追跡外(~/.gitignore)なので、試したことが
+# `yadm diff` に出続けない。最後に読むので、上のどれでも上書きできる。
+# 環境変数など非対話シェルにも要るものは ~/.zshenv.local のほう。
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

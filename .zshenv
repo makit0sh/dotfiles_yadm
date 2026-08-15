@@ -24,3 +24,7 @@ path=(
 [[ -d ~/.local/share/mise/shims ]] && path=(~/.local/share/mise/shims $path)
 
 export PATH
+
+# このマシンだけの環境変数。追跡外(~/.gitignore)。
+# 対話シェル限定でよいものは ~/.zshrc.local のほう。
+[[ -f ~/.zshenv.local ]] && source ~/.zshenv.local

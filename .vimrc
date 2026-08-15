@@ -249,11 +249,19 @@ set tags=./tags;
 " https://github.com/junegunn/vim-plug
 
 " automatic installation
+"
+" 端末がある(= 人が起動した)ときだけ自動インストールする。`vim -es` などの
+" headless では &term が空になる —— そこで PlugInstall を仕掛けると、UI を
+" 出せないまま止まる。headless で入れたいときは bootstrap か、
+"   vim -es -u ~/.vimrc -c 'PlugInstall --sync' -c qa
+" のように明示的に呼ぶ。
 if empty(glob('~/.vim/autoload/plug.vim'))
   silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
     \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  silent !mkdir ~/.vim/plugged
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+  silent !mkdir -p ~/.vim/plugged
+  if !empty(&term)
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+  endif
 endif
 
 " plugins
@@ -389,3 +397,9 @@ if s:HasPlug('vim-fold-cycle')
   nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
 endif
 
+
+" このマシンだけの設定。追跡外(~/.gitignore)なので、試したことが
+" `yadm diff` に出続けない。最後に読むので上のどれでも上書きできる。
+if filereadable(expand("~/.vimrc.local"))
+  source ~/.vimrc.local
+endif

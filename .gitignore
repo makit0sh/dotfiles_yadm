@@ -26,6 +26,13 @@
 !.claude/settings.json
 .claude/settings.local.json
 
+# このマシンだけの設定。.zshrc / .zshenv の末尾から読まれる。
+# 追跡しないので、試した設定が yadm diff に出続けない。
+.zshrc.local
+.zshenv.local
+.vimrc.local
+.gitconfig.local
+
 # 認証情報
 .ssh/
 .aws/

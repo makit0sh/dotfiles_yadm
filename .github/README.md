@@ -1,8 +1,8 @@
 # dotfiles_yadm
 
-yadm で管理している個人 dotfiles。macOS / Ubuntu(WSL2 を含む)で共通。
+yadm で管理する個人 dotfiles。macOS と Ubuntu(WSL2 含む)で共通。
 
-## Install
+## セットアップ
 
 ```bash
 yadm clone git@github.com:makit0sh/dotfiles_yadm.git
@@ -10,110 +10,81 @@ yadm config local.class personal   # 仕事のマシンなら work
 yadm bootstrap
 ```
 
-`bootstrap` は macOS なら `~/.Brewfile` を、Linux なら apt のリストを流し、
-どちらでも `mise install` でランタイムを揃える。何度流しても安全。
+`bootstrap` は macOS なら `~/.Brewfile`、Linux なら `~/.config/apt/packages.txt`
+を流し、どちらでも mise でランタイムを入れ、vim プラグインを入れる。
+何度流しても安全。
 
-## 構成の考え方
+前提は mise・Docker・pnpm の3つだけで、Homebrew(macOS)は先に入れておく。
 
-### バージョン管理されるもの / されないもの
+## 何がどこに書いてあるか
 
-`~/.gitignore` が「事故ると大きいもの」を明示的に閉めている。とくに
-**`~/.claude/projects/` は 2026-08 時点で 1.3GB** あり、会話ログなので
-機微な内容も入る。**`~/.claude` を丸ごと add しないこと。**
+| ファイル | 中身 |
+| --- | --- |
+| `~/.Brewfile` | macOS 固有のパッケージ |
+| `~/.config/apt/packages.txt` | Linux 固有のパッケージ |
+| `~/.config/mise/config.toml` | OS を跨いで同じ版が欲しいもの(node, rg, fzf, yazi …) |
+| `~/.zshenv` | PATH と mise shims。非対話シェルにも効く |
+| `~/.zshrc` | alias・キーバインド・補完。対話シェルのみ |
+| `~/.config/ai/` | AI エージェントへの指示(AGENTS.md + stacks/) |
 
-### ツールの入れ方は3層
+決めた理由は各ファイルのコメントに書いてある。
 
-| 層 | 持ち場 | 例 |
-| --- | --- | --- |
-| `~/.Brewfile` | **macOS 固有**の GUI とネイティブなもの | cask, ffmpeg, gcc |
-| `~/.config/apt/packages.txt` | **Linux 固有 / OS に近いもの** | build-essential, zsh |
-| `~/.config/mise/config.toml` | **OS を跨いで同じ版が欲しいもの** | node, python, uv |
+## 守ること
 
-新しい CLI を足すときは、**まず mise に置けないかを考える**。置ければ macOS と
-Linux のリストを二重に保守しなくて済む。以前はこの逃がし先が無く、brew と apt に
-同じようなリストが並んでいた。
+新しい CLI を足すときは、まず mise に置けないか考える。置ければ macOS と Linux の
+リストを二重に保守しなくて済む。
 
-どちらのリストも `bootstrap` が読むだけで、**何を入れるかの決定はリスト側が持つ**。
+**`~/.claude` を丸ごと `yadm add` しない。** `projects/` だけで 1.3GB あり、
+中身は会話ログ。`~/.gitignore` が閉じてあるが、確認してから足すこと。
 
-棚卸しは、入れた覚えのあるものを出すコマンドとの差分で見る:
+`~/.config/ai/` は個人の GitHub リポジトリで同期される。**雇用主固有の規約・
+社内ツール・製品名をここに置かない。**
+
+`.zshrc` の `ZSH_HUMAN` 分岐には、外れて困るものを入れない。判定は端末の有無と
+環境変数による best-effort で、VSCode の Copilot は区別できない。
+
+## このマシンだけの設定
+
+追跡外なので `yadm diff` に出ない。試すときはここへ。
+
+```
+~/.zshenv.local     環境変数(非対話シェルにも効く)
+~/.zshrc.local      alias やキーバインド
+~/.vimrc.local
+~/.gitconfig.local
+```
+
+## class
+
+`yadm config local.class` で `personal` / `work` を切り替える。
+`##class.*` が付いたファイルは、該当するものだけが展開される。
+
+`.gitconfig` と `.claude/settings.json` は personal のみ。work では生成されないので、
+そのマシンにある会社用の設定がそのまま残る。
+
+## よく使う操作
 
 ```bash
-brew leaves          # macOS
-apt-mark showmanual  # Linux
+plugin-update                  # zsh プラグインの更新(手動。自動にはしない)
+brew bundle --global           # Brewfile を反映
+mise install                   # mise の [tools] を反映
+vim -es -u ~/.vimrc -c 'PlugInstall --sync' -c qa   # vim プラグイン(headless 可)
+brew leaves                    # Brewfile との差分を見る
+apt-mark showmanual            # packages.txt との差分を見る
 ```
 
-`~/.Brewfile` の中身は `brew bundle dump` の出力ではなく **`brew leaves` から
-手で選んだもの**。dump は依存まで書き出す(実測148行)ので、事故的に入った
-ものまで新しいマシンへ運んでしまう。
+## 困ったとき
 
-**apt には Brewfile に相当する標準形式が無い。** `aptfile` や `equivs` の
-メタパッケージという手はあるが、道具を増やすほどの利点が無いので
-「1行1パッケージ・`#` はコメント」の素のリストにしてある。**得たいのは
-フォーマットではなく、宣言をスクリプトから分離するという Brewfile の性質**のほう。
-(本当に宣言的にしたいなら nix / home-manager が本命で、macOS と Linux を
-1つの記述で賄えるが、学習コストと移行コストが桁で違うので採っていない。)
-
-### AI エージェントへの指示は `~/.config/ai/`
-
-**エージェント非依存の指示テキストを1箇所に置き、各エージェントから参照する。**
-
-```
-~/.config/ai/AGENTS.md          言語・事実の扱い・検証・変更の出し方(スタック非依存)
-~/.config/ai/stacks/*.md        node-web / cpp-embedded / ros2 / linux-kernel
-        ↑ @import
-~/.claude/CLAUDE.md             class によって読むスタックが変わる(中身は持たない)
-```
-
-**エントリだけがエージェント固有**(`~/.claude/CLAUDE.md`)で、**中身は
-`AGENTS.md` という agent 非依存の名前**に置く。これは各リポジトリで既に採っている
-形と同じ(`CLAUDE.md` が `@AGENTS.md` を import する)で、別のエージェントを
-足すときに、そのエージェント用の薄い入口を1つ書けば済むようにするため。
-
-`~/.claude/CLAUDE.md` は `##class.personal` / `##class.work` の2種類があり、
-`yadm config local.class` で選んだほうが展開される。個人機は node-web を、
-仕事機は cpp-embedded / ros2 / linux-kernel を読む。
-
-**なぜ `~/.claude/` の中に直接書かないか:** 同じ指示を VSCode の Copilot からも
-参照したいため。VSCode の Settings Sync は VSCode の中しか運べず、Claude Code は
-その外にいるので、どちらかに閉じ込めると片方に届かない。**同期機構を統一する
-のではなく、共有したい実体だけを外に出して両方から指させる。**
-
-VSCode 自身の設定は Settings Sync に任せる(この dotfiles では扱わない)。
-境界は「**VSCode の中の設定は Sync、AI への指示テキストは dotfiles**」。
-
-> **仕事マシンの注意**: `~/.config/ai/` は個人の GitHub リポジトリで同期される。
-> 雇用主固有の規約・社内ツール・製品名・コード片をここに置かないこと。
-> 置いてよいのは「どこの職場でも通じる一般論」だけ。
-
-### マシン差分は yadm alt
-
-`##class.personal` / `##class.work` / `##os.Darwin` / `##os.Linux` を使う。
-`yadm alt` が該当するものだけを展開し、**該当が無ければそのファイルは作られない**。
-
-| ファイル | 展開 |
+| 症状 | 対処 |
 | --- | --- |
-| `.claude/CLAUDE.md` | class ごと(読むスタックが変わる) |
-| `.gitconfig` | **`##class.personal` のみ** |
-| `.claude/settings.json` | **`##class.personal` のみ** |
-
-**`.gitconfig` と `.claude/settings.json` を personal 限定にしているのは、
-仕事のアカウントが別だから。** `settings.json` は契約に紐づくモデル指定
-(`opus[1m]`)を持つので、会社マシンに置いても意味を成さないか、意味を成すと
-まずい。
-work のマシンでは `.gitconfig` は生成されず、そこにある会社用の設定がそのまま残る。
-「個人の name / email を会社のコミットに載せてしまう」事故を、**設定の書き分けでは
-なく、ファイルが存在しないこと**で防いでいる。
-
-**絶対パスを設定ファイルに書かない。** ホームのパスは OS でもユーザー名でも変わる。
-どうしても実行ファイルを指す必要があるときは `~/.local/bin/` に置いて
-PATH で解決する(`##os.*` で二重に持つより壊れにくい)。
+| `pnpm` が Node のバージョンで文句を言う | リポジトリの外で叩いている。`cd` するか、activation が入っているか確認 |
+| `[ERROR] This project requires Node.js …` | `mise install` してシェルを開き直す |
+| `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` | `CI=true pnpm install --frozen-lockfile`。ツールは `npx` ではなく devDependency + `pnpm exec` |
+| `npx jest` が「No tests found」 | worktree の中にいる。`--testPathIgnorePatterns` で上書き |
+| worktree で `pnpm <script>` が落ちる | worktree 内で `CI=true pnpm install --prefer-offline`。`node_modules` を symlink にしない |
 
 ## 腐らせないために
 
-このリポジトリは 2025-03 から 2026-08 まで **1年5ヶ月コミットされなかった**。
-道具の問題ではない(yadm は bare git そのもの)ので、運用側で気づけるようにする:
-
-- `yadm status` に差分が溜まっていないか、ときどき見る
-- ツールが `.zshrc` に勝手に追記することがある(Docker Desktop など)。
-  採るか捨てるか決めてコミットする。放置すると「手で書いた設定」と区別が
-  付かなくなり、コミットが億劫になる
+2025-03 から 2026-08 まで1年5ヶ月コミットされなかった。道具の問題ではないので、
+`yadm status` をときどき見る。ツールが `.zshrc` に勝手に追記することがある
+(Docker Desktop など)。採るか捨てるか決めてコミットする。
