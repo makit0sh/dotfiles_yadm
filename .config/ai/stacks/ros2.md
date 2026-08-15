@@ -1,6 +1,6 @@
 # ROS 2(仕事)
 
-`core.md` と `cpp-embedded.md` の上に載る分。一般論のみ(`cpp-embedded.md` の
+`AGENTS.md` と `cpp-embedded.md` の上に載る分。一般論のみ(`cpp-embedded.md` の
 冒頭の但し書きが同じように効く)。
 
 ## 構造

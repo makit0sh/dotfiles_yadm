@@ -1,6 +1,6 @@
 # Linux カーネル / ドライバ(仕事)
 
-`core.md` と `cpp-embedded.md` の上に載る分。一般論のみ。
+`AGENTS.md` と `cpp-embedded.md` の上に載る分。一般論のみ。
 
 ## 前提
 

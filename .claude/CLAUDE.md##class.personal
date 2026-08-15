@@ -10,7 +10,7 @@ VSCode の Settings Sync は VSCode の中しか運べない。共有したい�
 class ごとにこのファイルが差し替わる(yadm alt)。personal は macOS と WSL2 の
 個人開発機で、仕事機は `##class.work` のほうを見る。
 
-@~/.config/ai/core.md
+@~/.config/ai/AGENTS.md
 @~/.config/ai/stacks/node-web.md
 
 ---

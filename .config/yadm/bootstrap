@@ -41,28 +41,13 @@ Darwin)
 Linux)
   log 'bootstrap for Linux'
   if command -v apt >/dev/null 2>&1; then
+    # 何を入れるかの決定は ~/.config/apt/packages.txt が持つ(macOS 側の
+    # ~/.Brewfile に対応する)。apt には Brewfile に相当する標準形式が無いので
+    # 素のリストだが、得たいのは形式ではなく「宣言をスクリプトから分離する」性質。
+    packages=$(sed 's/#.*//' ~/.config/apt/packages.txt | tr -s '[:space:]' '\n' | grep -v '^$')
     sudo apt update
-    # ここに書くのは「apt でしか入らない / OS に近い」ものだけ。
-    # 言語ランタイムと汎用 CLI は mise 側(下の default-tools)に置く。
-    sudo apt install -y \
-      build-essential \
-      curl \
-      wget \
-      git \
-      zsh \
-      vim \
-      tmux \
-      universal-ctags \
-      unzip \
-      xsel \
-      ranger \
-      w3m-img \
-      atool \
-      caca-utils \
-      lynx \
-      highlight \
-      mediainfo \
-      poppler-utils
+    # shellcheck disable=SC2086
+    sudo apt install -y $packages
   fi
 
   # フォント(Cica)。既に入っていれば何もしない。

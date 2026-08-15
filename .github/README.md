@@ -26,27 +26,48 @@ yadm bootstrap
 | 層 | 持ち場 | 例 |
 | --- | --- | --- |
 | `~/.Brewfile` | **macOS 固有**の GUI とネイティブなもの | cask, ffmpeg, gcc |
-| `bootstrap` の apt 節 | **Linux 固有 / OS に近いもの** | build-essential, zsh |
+| `~/.config/apt/packages.txt` | **Linux 固有 / OS に近いもの** | build-essential, zsh |
 | `~/.config/mise/config.toml` | **OS を跨いで同じ版が欲しいもの** | node, python, uv |
 
 新しい CLI を足すときは、**まず mise に置けないかを考える**。置ければ macOS と
 Linux のリストを二重に保守しなくて済む。以前はこの逃がし先が無く、brew と apt に
 同じようなリストが並んでいた。
 
+どちらのリストも `bootstrap` が読むだけで、**何を入れるかの決定はリスト側が持つ**。
+
+棚卸しは、入れた覚えのあるものを出すコマンドとの差分で見る:
+
+```bash
+brew leaves          # macOS
+apt-mark showmanual  # Linux
+```
+
 `~/.Brewfile` の中身は `brew bundle dump` の出力ではなく **`brew leaves` から
 手で選んだもの**。dump は依存まで書き出す(実測148行)ので、事故的に入った
 ものまで新しいマシンへ運んでしまう。
+
+**apt には Brewfile に相当する標準形式が無い。** `aptfile` や `equivs` の
+メタパッケージという手はあるが、道具を増やすほどの利点が無いので
+「1行1パッケージ・`#` はコメント」の素のリストにしてある。**得たいのは
+フォーマットではなく、宣言をスクリプトから分離するという Brewfile の性質**のほう。
+(本当に宣言的にしたいなら nix / home-manager が本命で、macOS と Linux を
+1つの記述で賄えるが、学習コストと移行コストが桁で違うので採っていない。)
 
 ### AI エージェントへの指示は `~/.config/ai/`
 
 **エージェント非依存の指示テキストを1箇所に置き、各エージェントから参照する。**
 
 ```
-~/.config/ai/core.md            言語・事実の扱い・検証・変更の出し方(スタック非依存)
+~/.config/ai/AGENTS.md          言語・事実の扱い・検証・変更の出し方(スタック非依存)
 ~/.config/ai/stacks/*.md        node-web / cpp-embedded / ros2 / linux-kernel
         ↑ @import
 ~/.claude/CLAUDE.md             class によって読むスタックが変わる(中身は持たない)
 ```
+
+**エントリだけがエージェント固有**(`~/.claude/CLAUDE.md`)で、**中身は
+`AGENTS.md` という agent 非依存の名前**に置く。これは各リポジトリで既に採っている
+形と同じ(`CLAUDE.md` が `@AGENTS.md` を import する)で、別のエージェントを
+足すときに、そのエージェント用の薄い入口を1つ書けば済むようにするため。
 
 `~/.claude/CLAUDE.md` は `##class.personal` / `##class.work` の2種類があり、
 `yadm config local.class` で選んだほうが展開される。個人機は node-web を、
@@ -73,8 +94,12 @@ VSCode 自身の設定は Settings Sync に任せる(この dotfiles では扱�
 | --- | --- |
 | `.claude/CLAUDE.md` | class ごと(読むスタックが変わる) |
 | `.gitconfig` | **`##class.personal` のみ** |
+| `.claude/settings.json` | **`##class.personal` のみ** |
 
-**`.gitconfig` を personal 限定にしているのは、仕事のアカウントが別だから。**
+**`.gitconfig` と `.claude/settings.json` を personal 限定にしているのは、
+仕事のアカウントが別だから。** `settings.json` は契約に紐づくモデル指定
+(`opus[1m]`)を持つので、会社マシンに置いても意味を成さないか、意味を成すと
+まずい。
 work のマシンでは `.gitconfig` は生成されず、そこにある会社用の設定がそのまま残る。
 「個人の name / email を会社のコミットに載せてしまう」事故を、**設定の書き分けでは
 なく、ファイルが存在しないこと**で防いでいる。
