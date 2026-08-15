@@ -4,9 +4,19 @@ yadm で管理する個人 dotfiles。macOS と Ubuntu(WSL2 含む)で共通。
 
 ## セットアップ
 
+yadm が入っていない新しいマシンなら、これ1行で全部やる。
+
+```bash
+bash -c "$(curl -fsSL https://git.io/JO0b6)"
+YADM_CLASS=work bash -c "$(curl -fsSL https://git.io/JO0b6)"   # 仕事のマシン
+```
+
+yadm が既にあるなら:
+
 ```bash
 yadm clone git@github.com:makit0sh/dotfiles_yadm.git
 yadm config local.class personal   # 仕事のマシンなら work
+yadm alt
 yadm bootstrap
 ```
 
