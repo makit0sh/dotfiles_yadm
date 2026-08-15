@@ -67,9 +67,21 @@ VSCode 自身の設定は Settings Sync に任せる(この dotfiles では扱�
 ### マシン差分は yadm alt
 
 `##class.personal` / `##class.work` / `##os.Darwin` / `##os.Linux` を使う。
-**絶対パスを設定ファイルに書かない** — `~/.claude/settings.json` の statusLine は
-`/Users/t-maki/...` を直書きしていて Linux で必ず壊れる状態だったので、
-スクリプトを `~/.local/bin/`(PATH 上)へ移し、コマンド名だけで解決するようにした。
+`yadm alt` が該当するものだけを展開し、**該当が無ければそのファイルは作られない**。
+
+| ファイル | 展開 |
+| --- | --- |
+| `.claude/CLAUDE.md` | class ごと(読むスタックが変わる) |
+| `.gitconfig` | **`##class.personal` のみ** |
+
+**`.gitconfig` を personal 限定にしているのは、仕事のアカウントが別だから。**
+work のマシンでは `.gitconfig` は生成されず、そこにある会社用の設定がそのまま残る。
+「個人の name / email を会社のコミットに載せてしまう」事故を、**設定の書き分けでは
+なく、ファイルが存在しないこと**で防いでいる。
+
+**絶対パスを設定ファイルに書かない。** ホームのパスは OS でもユーザー名でも変わる。
+どうしても実行ファイルを指す必要があるときは `~/.local/bin/` に置いて
+PATH で解決する(`##os.*` で二重に持つより壊れにくい)。
 
 ## 腐らせないために
 
