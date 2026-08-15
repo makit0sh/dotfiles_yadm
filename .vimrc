@@ -250,7 +250,13 @@ endif
 " - Avoid using standard Vim directory names like 'plugin'
 silent! if plug#begin('~/.vim/plugged')
 
-Plug 'w0ng/vim-hybrid'
+" 2026-08-15 の棚卸しで外したもの:
+"   w0ng/vim-hybrid              colorscheme は solarized。hybrid は下で
+"                                コメントアウトされたまま
+"   vim-scripts/taglist.vim      tagbar と同じ仕事。設定があるのは tagbar 側
+"                                だけで、taglist 自体は 2013 年で止まっている
+"   editorconfig/editorconfig-vim
+"                                Vim 9.0.1799 から本体が持つ(下の packadd)
 Plug 'altercation/vim-colors-solarized'
 Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
 
@@ -259,7 +265,6 @@ Plug 'honza/vim-snippets'
 Plug 'easymotion/vim-easymotion'
 Plug 'junegunn/fzf'
 Plug 'ludovicchabant/vim-gutentags'
-Plug 'vim-scripts/taglist.vim'
 Plug 'majutsushi/tagbar'
 Plug 'airblade/vim-gitgutter'
 Plug 'osyo-manga/vim-anzu'
@@ -275,7 +280,6 @@ Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-lastpat'
 Plug 'kana/vim-textobj-entire'
 Plug 'nelstrom/vim-visual-star-search'
-Plug 'editorconfig/editorconfig-vim'
 Plug 'pseewald/vim-anyfold'
 Plug 'arecarn/vim-fold-cycle'
 
@@ -287,6 +291,12 @@ Plug 'jiangmiao/auto-pairs', {'for': ['lisp', 'scheme', 'clojure']}
 
 " initialize plugin system
 call plug#end()
+endif
+
+" editorconfig は Vim 本体の同梱パッケージ(9.0.1799 以降)。
+" プラグイン版は 2026-08-15 に外した。
+if has('patch-9.0.1799')
+  packadd! editorconfig
 endif
 
 " colorscheme
@@ -316,26 +326,42 @@ let g:UltiSnipsSnippetsDir="~/.vim/UltiSnips"
 " filetypes
 autocmd FileType plaintex UltiSnipsAddFiletypes tex.plaintex
 
-" for vim-anzu
-" mapping
-nmap n <Plug>(anzu-n-with-echo)
-nmap N <Plug>(anzu-N-with-echo)
-nmap * <Plug>(anzu-star-with-echo)
-nmap # <Plug>(anzu-sharp-with-echo)
-" clear status
-" nmap <Esc><Esc> <Plug>(anzu-clear-search-status)
-" statusline
-set statusline=%{anzu#search_status()}
+" <Plug> への map は、プラグインが無いと**黙って無反応になる**。
+" 2026-08-15 に確認したところ、プラグイン未導入の状態では p / P / n / N / * / #
+" / <C-p> / <C-n> が全部死んでいた。貼り付けと検索が効かない vim になるので、
+" 新しいマシンや素の vimrc を持ち込んだ先で使い物にならない。
+"
+" 判定は「導入されているか」で行う。**`g:loaded_*` は使えない** —— プラグインの
+" 読み込みは vimrc を読み終えた後なので、この時点では必ず未定義になる
+" (最初にそれで書いて、実環境でも map が消えた)。
+function! s:HasPlug(name) abort
+  return isdirectory(expand('~/.vim/plugged/' . a:name))
+endfunction
 
-" keymaps for yankround
-nmap p <Plug>(yankround-p)
-xmap p <Plug>(yankround-p)
-nmap P <Plug>(yankround-P)
-nmap gp <Plug>(yankround-gp)
-xmap gp <Plug>(yankround-gp)
-nmap gP <Plug>(yankround-gP)
-nmap <C-p> <Plug>(yankround-prev)
-nmap <C-n> <Plug>(yankround-next)
+" for vim-anzu(検索位置の表示)
+" Vim 8.1.1270 以降は 'shortmess' から S を外すだけで件数が出る。anzu が
+" 無いときはそれで代用する。
+if s:HasPlug('vim-anzu')
+  nmap n <Plug>(anzu-n-with-echo)
+  nmap N <Plug>(anzu-N-with-echo)
+  nmap * <Plug>(anzu-star-with-echo)
+  nmap # <Plug>(anzu-sharp-with-echo)
+  set statusline=%{anzu#search_status()}
+elseif has('patch-8.1.1270')
+  set shortmess-=S
+endif
+
+" keymaps for yankround(ヤンク履歴)
+if s:HasPlug('yankround.vim')
+  nmap p <Plug>(yankround-p)
+  xmap p <Plug>(yankround-p)
+  nmap P <Plug>(yankround-P)
+  nmap gp <Plug>(yankround-gp)
+  xmap gp <Plug>(yankround-gp)
+  nmap gP <Plug>(yankround-gP)
+  nmap <C-p> <Plug>(yankround-prev)
+  nmap <C-n> <Plug>(yankround-next)
+endif
 
 " emmet setting
 " enable just for html/css
@@ -375,8 +401,10 @@ set foldlevel=99
 
 " for fold-cycle
 let g:fold_cycle_default_mapping = 0 "disable default mappings
-nmap <Tab><Tab> <Plug>(fold-cycle-open)
-nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
+if s:HasPlug('vim-fold-cycle')
+  nmap <Tab><Tab> <Plug>(fold-cycle-open)
+  nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
+endif
 
 " tagbar setting
 nmap <F8> :TagbarToggle<CR>
