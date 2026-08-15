@@ -45,6 +45,32 @@ function plugin-load {
   done
 }
 
+##? Update every cloned plugin. plugin-load only clones when the directory is
+##? missing, so without this there is no path by which a plugin ever moves.
+##? Measured 2026-08-15: everything here was from 2024, and zsh-completions —
+##? which is a database of completions, so staleness means missing tools — was
+##? 109 commits behind. Run it by hand now and then; it is not automatic
+##? because a shell that updates plugins on startup is a shell that hangs on a
+##? bad network.
+function plugin-update {
+  : ${ZPLUGINDIR:=~/.config/zsh/plugins}
+  ##? These are shallow (--depth 1) clones, so `pull --ff-only` fails with
+  ##? "Not possible to fast-forward" — the truncated histories diverge rather
+  ##? than descend. They are read-only vendored copies, so fetch + hard reset
+  ##? is both correct and simpler. It DOES discard local edits: patch a plugin
+  ##? and you lose it here, which is the right trade for something you do not
+  ##? own.
+  local plugdir
+  for plugdir in $ZPLUGINDIR/*(/N); do
+    [[ -d $plugdir/.git ]] || continue
+    echo "Updating ${plugdir:t}..."
+    command git -C $plugdir fetch --quiet --depth 1 origin HEAD &&
+      command git -C $plugdir reset --quiet --hard FETCH_HEAD &&
+      command git -C $plugdir submodule --quiet update --init --recursive
+  done
+  echo "done. open a new shell to pick them up."
+}
+
 # version compare
 autoload is-at-least
 
@@ -206,26 +232,36 @@ if (( ZSH_HUMAN )); then
   bindkey "^[[B" history-beginning-search-forward-end
 fi
 
-# Automatically change the directory in bash after closing ranger
+# ファイラ: yazi(2026-08-15 に ranger から移行)
 #
-# This is a bash function for .bashrc to automatically change the directory to
-# the last visited one after ranger quits.
-# To undo the effect of this function, you can type "cd -" to return to the
-# original directory.
-
-function ranger-cd {
-    tempfile="$(mktemp -t tmp.XXXXXX)"
-    ranger --choosedir="$tempfile" "${@:-$(pwd)}"
-    test -f "$tempfile" &&
-    if [ "$(cat -- "$tempfile")" != "$(echo -n `pwd`)" ]; then
-        cd -- "$(cat "$tempfile")"
-    fi
-    rm -f -- "$tempfile"
+# ranger は Python 製で、大きなディレクトリでプレビューが同期的に走るぶん待たされる。
+# yazi は Rust 製で I/O が非同期。乗り換えの決め手は速度そのものより、
+# **ranger 側がもう活発ではない**こと。
+#
+# 終了時に居たディレクトリへ移動する、というのは ranger-cd と同じ仕掛け。
+# yazi 公式が配っているラッパをそのまま使う(--cwd-file で受け取る)。
+function y {
+  local tmp="$(mktemp -t yazi-cwd.XXXXXX)" cwd
+  yazi "$@" --cwd-file="$tmp"
+  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+    builtin cd -- "$cwd"
+  fi
+  command rm -f -- "$tmp"
 }
 
-# This binds Ctrl-O to ranger-cd:
 if (( ZSH_HUMAN )); then
-  bindkey -s '^o' 'ranger-cd^M'
+  # Ctrl-O は ranger-cd 時代からの手癖なので割り当てを変えない。
+  bindkey -s '^o' 'y^M'
+
+  # zoxide: 訪問したディレクトリを覚えて `z allergy` で飛べるようにする。
+  #
+  # **`--cmd cd` を付けない。** それは cd を上書きする指定で、この .zshrc が
+  # 2026-08-15 にまさにその形(cd を関数で包む)で失敗したところ。エージェントの
+  # 実行にも乗ってしまうし、cd の意味を変えると壊れ方が分かりにくくなる。
+  # `z` / `zi` という別のコマンドとして足すだけにする。
+  if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+  fi
 fi
 
 # add bin in home dir to path

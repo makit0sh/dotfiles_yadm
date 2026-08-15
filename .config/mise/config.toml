@@ -14,6 +14,11 @@ python = "3.14.7"
 uv = "0.12.4"
 pnpm = "11.15.0"
 
+# OS を跨いで同じ版が欲しい CLI。**brew と apt の両方に書かないための逃がし先**が
+# ここ(README の3層の話)。yazi は Ubuntu の apt に無く、zoxide も古い。
+yazi = "26.5.6"
+zoxide = "0.10.0"
+
 # ここに足したツールは macOS でも Ubuntu/WSL でも同じ版が入る。
 # **OS 別のパッケージリスト(~/.Brewfile と bootstrap の apt 節)を
 # 二重に保守しないための逃がし先**がここ。

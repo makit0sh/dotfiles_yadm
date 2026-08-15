@@ -28,16 +28,13 @@ zsh
 vim
 tmux
 universal-ctags
-ranger
+# ファイラは yazi に移行(2026-08-15)。apt に無いので mise が持つ。
+# ranger と、そのプレビュー用に並べていた w3m-img / atool / caca-utils /
+# lynx / highlight / mediainfo も一緒に外した — yazi は自前でプレビューする。
 
 # --- クリップボード(X / WSL) ----------------------------------------------
 xsel
 
-# --- ranger のプレビュー用 --------------------------------------------------
-w3m-img
-atool
-caca-utils
-lynx
-highlight
-mediainfo
+# --- PDF ---------------------------------------------------------------------
+# pdftotext。ranger のプレビュー用ではなく、資料の中身を読むのに使うので残す。
 poppler-utils
