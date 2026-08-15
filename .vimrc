@@ -24,6 +24,9 @@ set smarttab
 set shiftwidth=4
 set tabstop=4
 set shiftwidth=2
+" 2026-08-15: airline を外したので、これを止めていた理由は無くなった。
+" 戻すと全角記号の幅の扱いが変わる(端末側の設定と揃える必要がある)ので、
+" 必要になったときに外すこと。
 "set ambiwidth=double "disabled because airline broke
 
 set nrformats-=octal
@@ -250,44 +253,41 @@ endif
 " - Avoid using standard Vim directory names like 'plugin'
 silent! if plug#begin('~/.vim/plugged')
 
-" 2026-08-15 の棚卸しで外したもの:
-"   w0ng/vim-hybrid              colorscheme は solarized。hybrid は下で
-"                                コメントアウトされたまま
-"   vim-scripts/taglist.vim      tagbar と同じ仕事。設定があるのは tagbar 側
-"                                だけで、taglist 自体は 2013 年で止まっている
-"   editorconfig/editorconfig-vim
-"                                Vim 9.0.1799 から本体が持つ(下の packadd)
-Plug 'altercation/vim-colors-solarized'
-Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
-
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
-Plug 'easymotion/vim-easymotion'
-Plug 'junegunn/fzf'
-Plug 'ludovicchabant/vim-gutentags'
-Plug 'majutsushi/tagbar'
-Plug 'airblade/vim-gitgutter'
-Plug 'osyo-manga/vim-anzu'
-Plug 'LeafCage/yankround.vim'
+" 2026-08-15: 30個 32MB から12個へ絞った。
+"
+" 主エディタは VSCode で、vim は「どの箱でも動く道具」として持つ、という
+" 前提に切り替えたのが理由。基準は3つ:
+"   - 外部バイナリに依存しない(ctags や python3 が要るものは、入っていない
+"     箱でただの死荷重になる)
+"   - 素の vim に無い機能であること(本体が持つようになったものは本体に任せる)
+"   - 新しい箱で PlugInstall が数秒で終わること
+"
+" 外したもの(理由):
+"   ultisnips, vim-snippets   12MB。+python3 が要る。スニペットは VSCode の仕事
+"   junegunn/fzf              3.5MB。vimrc に設定が無く、fzf 本体はシェル側にある
+"   emmet-vim, xml.vim, vim-css-color
+"                             web 専用。VSCode の領分
+"   vim-easymotion            2MB。設定が無く、/ と f で足りている
+"   vim-airline(+themes)     2.6MB。見た目。ambiwidth=double を壊した当人でもある
+"   vim-gutentags, tagbar     ctags バイナリが要る
+"   vim-gitgutter             1.5MB。あると便利、無くて困らない
+"   vim-fugitive              git CLI がある箱では要らない
+"   vim-abolish               使っていない
+"   vim-visual-star-search    数行で書けるものに1プラグイン
+"   vim-colors-solarized      Vim 9 の同梱 colorscheme で足りる
+"   auto-pairs                lisp/scheme/clojure 限定で、その用途が無くなった
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-unimpaired'
-Plug 'tpope/vim-abolish'
-Plug 'tpope/vim-fugitive'
 Plug 'kana/vim-textobj-user'
 Plug 'kana/vim-textobj-lastpat'
 Plug 'kana/vim-textobj-entire'
-Plug 'nelstrom/vim-visual-star-search'
+Plug 'osyo-manga/vim-anzu'
+Plug 'LeafCage/yankround.vim'
 Plug 'pseewald/vim-anyfold'
 Plug 'arecarn/vim-fold-cycle'
-
-Plug 'vim-scripts/xml.vim', {'for': ['xml']}
-Plug 'mattn/emmet-vim', {'for': ['html', 'css']}
-Plug 'ap/vim-css-color'
-
-Plug 'jiangmiao/auto-pairs', {'for': ['lisp', 'scheme', 'clojure']}
 
 " initialize plugin system
 call plug#end()
@@ -300,31 +300,10 @@ if has('patch-9.0.1799')
 endif
 
 " colorscheme
-" use hybrid color scheme
+" Vim 9 同梱の habamax。solarized プラグインをやめたので本体のものを使う。
+" 古い vim には無いので、失敗しても止まらないように silent! を付ける。
 set background=dark
-
-" let g:hybrid_custom_term_colors = 1 " eneble if your terminal using hybrid colorscheme
-" let g:hybrid_reduced_contrast = 1 " Remove this line if using the default pallete.
-" colorscheme hybrid
-colorscheme solarized
-
-" for airline
-let g:airline_theme='solarized'
-let g:airline_solarized_bg='dark'
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#buffer_idx_mode = 1
-let g:airline#extensions#whitespace#mixed_indent_algo = 1
-
-" for UltiSnips
-" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
-let g:UltiSnipsExpandTrigger="<C-k>"
-let g:UltiSnipsJumpForwardTrigger="<C-j>"
-let g:UltiSnipsJumpBackwardTrigger="<C-b>"
-let g:UltiSnipsEditSplit="vertical"
-" directory for custom snippets
-let g:UltiSnipsSnippetsDir="~/.vim/UltiSnips"
-" filetypes
-autocmd FileType plaintex UltiSnipsAddFiletypes tex.plaintex
+silent! colorscheme habamax
 
 " <Plug> への map は、プラグインが無いと**黙って無反応になる**。
 " 2026-08-15 に確認したところ、プラグイン未導入の状態では p / P / n / N / * / #
@@ -341,12 +320,16 @@ endfunction
 " for vim-anzu(検索位置の表示)
 " Vim 8.1.1270 以降は 'shortmess' から S を外すだけで件数が出る。anzu が
 " 無いときはそれで代用する。
+" statusline は airline をやめたので自前。airline があった頃は
+" `set statusline=%{anzu#search_status()}` で足りていた(airline が上書き
+" していたため)が、今それをやると**検索状態しか出ない**行になる。
+set statusline=%f\ %m%r%h%w%=%{&filetype}\ %l/%L\ %P
 if s:HasPlug('vim-anzu')
   nmap n <Plug>(anzu-n-with-echo)
   nmap N <Plug>(anzu-N-with-echo)
   nmap * <Plug>(anzu-star-with-echo)
   nmap # <Plug>(anzu-sharp-with-echo)
-  set statusline=%{anzu#search_status()}
+  set statusline=%f\ %m%r%h%w\ %{anzu#search_status()}%=%{&filetype}\ %l/%L\ %P
 elseif has('patch-8.1.1270')
   set shortmess-=S
 endif
@@ -362,21 +345,6 @@ if s:HasPlug('yankround.vim')
   nmap <C-p> <Plug>(yankround-prev)
   nmap <C-n> <Plug>(yankround-next)
 endif
-
-" emmet setting
-" enable just for html/css
-let g:user_emmet_install_global = 0
-autocmd FileType html,css EmmetInstall
-
-"let g:user_emmet_mode='n'    "only enable normal mode functions.
-"let g:user_emmet_mode='inv'  "enable all functions, which is equal to
-let g:user_emmet_mode='a'    "enable all function in all mode.
-
-let g:user_emmet_leader_key='<C-Y>'
-
-" commentary settings
-" add comment type for new filetype
-" autocmd FileType apache setlocal commentstring=#\ %s
 
 " for vim-anyfold
 
@@ -405,14 +373,4 @@ if s:HasPlug('vim-fold-cycle')
   nmap <Tab><Tab> <Plug>(fold-cycle-open)
   nmap <S-Tab><S-Tab> <Plug>(fold-cycle-close)
 endif
-
-" tagbar setting
-nmap <F8> :TagbarToggle<CR>
-
-" jiangmiao/auto-pairs setting
-
-"if exists("g:AutoPairs")
-  "default let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', "`":"`", '```':'```', '"""':'"""', "'''":"'''"}
-  let g:AutoPairs = {'(':')', '[':']', '{':'}','"':'"'}
-"endif
 
