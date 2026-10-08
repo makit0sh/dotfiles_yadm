@@ -1,6 +1,41 @@
 {
-  "model": "opus[1m]",
+  "model": "opus",
   "effortLevel": "medium",
   "tui": "fullscreen",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Bash(aws secretsmanager:*) in this repo — reading/writing secrets values via aws CLI, scope to makit0sh/allergy_search work",
+      "Bash(aws ecs:*) task/service mutating subcommands in this repo — matches infra/manual/ecs-task-execution-secrets-policy.json blast radius"
+    ],
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured",
+      "**Cloud provider(s)**: AWS (aws CLI used; secretsmanager referenced; infra/manual/ecs-task-execution-secrets-policy.json present); Vercel and Supabase per repo docs (deploy targets, not corroborated beyond repo docs)",
+      "**Repository visibility**: Private — makit0sh/allergy_search (per gh)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: AWS Secrets Manager (aws secretsmanager marker in config); CI secrets referenced by name only: GITHUB_TOKEN, PIPELINE_ACCOUNT_EMAIL, PIPELINE_ACCOUNT_PASSWORD, SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD",
+      "**Default / protected branches**: main (default, per gh); Protected branches: none listed via classic protection, but rulesets were not queryable here — treat main as potentially ruleset-protected and avoid force-push/history rewrite on it",
+      "**CI/CD deploy targets**: GitHub Actions (.github/workflows) driving Supabase migrations (`pnpm supabase db push` on merge to main per db-migrate skill doc); Vercel for app deploys (per README/skill docs, repo-doc sourced only)",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+      "### continued",
+      "**Source control**: The trusted repo (github.com:makit0sh/allergy_search.git) and its remote(s) only",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: None configured",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: `.env*.local` and other gitignored secret-bearing files; CI secret names GITHUB_TOKEN, PIPELINE_ACCOUNT_EMAIL, PIPELINE_ACCOUNT_PASSWORD, SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD (values not gathered); infra/manual/ecs-task-execution-secrets-policy.json — share only with audiences cleared for this repo's maintainer-level access",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment; also treat infra/manual/ecs-task-execution-secrets-policy.json and any ECS task-execution IAM policy in this repo as protected IaC",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (this repo: allergy_search — a data pipeline + Next.js app for allergen disclosure info)",
+      "**Trusted repo**: /Users/t-maki/work/allergy_search (working dir is a worktree at .claude/worktrees/aws-scheduled-jobs) and its remote github.com:makit0sh/allergy_search.git (private) — confidential material (secrets, personal data) is never cleared into it by virtue of privacy; ordinary repo work (code, docs, migrations under pipeline/**, src/**, supabase/**) is in-scope",
+      "**Org-specific CLIs**: None configured — `pnpm supabase ...` (pinned devDependency wrapper, not a separate org CLI) and `gh` used routinely against this repo only",
+      "routine under pipeline/** and supabase/migrations/** prefixes for this repo's automated skills (franchise-check/parse/guide/scout/tend, db-migrate) — writes there follow the additive-only and ownership rules documented in CLAUDE.md/AGENTS.md/skills, but those are repo-authored constraints, not elevated trust grants"
+    ]
+  }
 }
