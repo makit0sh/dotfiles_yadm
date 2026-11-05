@@ -51,3 +51,6 @@ fzf = "latest"
 # **OS 別のパッケージリスト(~/.Brewfile と bootstrap の apt 節)を
 # 二重に保守しないための逃がし先**がここ。
 # 例: mise use -g ripgrep@latest
+#
+# class(personal / work)で入れ分けたいツールはここではなく
+# conf.d/<class>.toml##class.<class> に置く。

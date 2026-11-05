@@ -33,6 +33,7 @@ yadm bootstrap
 | `~/.Brewfile` | macOS 固有のパッケージ |
 | `~/.config/apt/packages.txt` | Linux 固有のパッケージ |
 | `~/.config/mise/config.toml` | OS を跨いで同じ版が欲しいもの(node, rg, fzf, yazi …) |
+| `~/.config/mise/conf.d/<class>.toml` | class 別に入れ分ける mise ツール(personal: stripe-cli)。`##class.*` で展開 |
 | `~/.zshenv` | PATH と mise shims。非対話シェルにも効く |
 | `~/.zshrc` | alias・キーバインド・補完。対話シェルのみ |
 | `~/.config/ai/` | AI エージェントへの指示(AGENTS.md + stacks/) |

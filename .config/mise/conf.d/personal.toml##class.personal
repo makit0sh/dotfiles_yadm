@@ -1,0 +1,13 @@
+# personal マシンだけで入れるツール。共通分は ../config.toml。
+#
+# config.toml 全体を ##class.* で分けないのは、共通の一覧が2つに割れて
+# 必ずずれるから。mise は ~/.config/mise/conf.d/*.toml もグローバル設定として
+# config.toml にマージして読むので、class ごとの差分だけをここに置く。
+# work 側に足したいものが出たら conf.d/work.toml##class.work を作る。
+#
+# 注意: `mise use -g` は config.toml のほうに書く。class 専用のツールは
+# このファイルを手で編集して足すこと。
+
+[tools]
+# 仕事マシンでは使わない(2026-11-06 に共通設定から移した)
+stripe-cli = "latest"
