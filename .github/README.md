@@ -36,6 +36,7 @@ yadm bootstrap
 | `~/.config/mise/conf.d/<class>.toml` | class 別に入れ分ける mise ツール(personal: stripe-cli)。`##class.*` で展開 |
 | `~/.zshenv` | PATH と mise shims。非対話シェルにも効く |
 | `~/.zshrc` | alias・キーバインド・補完。対話シェルのみ |
+| `~/bin/upgrade-all` | brew / apt / mise / claude / zsh・vim プラグインをまとめて更新 |
 | `~/.config/ai/` | AI エージェントへの指示(AGENTS.md + stacks/) |
 
 決めた理由は各ファイルのコメントに書いてある。
@@ -76,7 +77,8 @@ yadm bootstrap
 ## よく使う操作
 
 ```bash
-plugin-update                  # zsh プラグインの更新(手動。自動にはしない)
+upgrade-all                    # 入っているものを全部更新(合わない段は skip)。-n で確認だけ
+plugin-update                  # zsh プラグインだけ更新(= upgrade-all zsh)。自動にはしない
 brew bundle --global           # Brewfile を反映
 mise install                   # mise の [tools] を反映
 vim -es -u ~/.vimrc -c 'PlugInstall --sync' -c qa   # vim プラグイン(headless 可)

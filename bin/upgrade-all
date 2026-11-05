@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+#
+# Upgrade everything this dotfiles setup installs, in one go.
+#
+#   upgrade-all              # every step that applies to this machine
+#   upgrade-all mise zsh     # only these steps
+#   upgrade-all -n           # print what would run, change nothing
+#
+# Each step decides for itself whether it applies (OS, whether the tool is
+# installed, *how* it was installed) and skips with a reason otherwise, so the
+# same command is correct on macOS and on Ubuntu/WSL. A failing step does not
+# stop the rest: an unreachable GitHub should not leave brew un-upgraded.
+#
+# This upgrades what is installed. It does not apply declarations: new entries
+# in ~/.Brewfile, packages.txt or the mise config still need
+# `brew bundle --global` / bootstrap / `mise install`.
+#
+# Written for bash 3.2 (macOS /bin/bash): no associative arrays, no mapfile.
+
+set -uo pipefail
+
+ALL_STEPS="brew apt mise claude zsh vim"
+
+usage() {
+  cat <<EOF
+usage: ${0##*/} [-n] [step ...]
+
+steps (in order): $ALL_STEPS
+  -n, --dry-run   print the commands instead of running them
+  -h, --help      show this help
+EOF
+}
+
+DRY_RUN=0
+steps=()
+for arg in "$@"; do
+  case "$arg" in
+  -n | --dry-run) DRY_RUN=1 ;;
+  -h | --help) usage; exit 0 ;;
+  -*) echo "unknown option: $arg" >&2; usage >&2; exit 2 ;;
+  *)
+    case " $ALL_STEPS " in
+    *" $arg "*) steps+=("$arg") ;;
+    *) echo "unknown step: $arg" >&2; usage >&2; exit 2 ;;
+    esac
+    ;;
+  esac
+done
+# Always run in canonical order, whatever order the args came in: brew must
+# go before mise because brew may be what upgrades mise itself.
+selected=()
+for s in $ALL_STEPS; do
+  if [ ${#steps[@]} -eq 0 ]; then
+    selected+=("$s")
+  else
+    case " ${steps[*]} " in *" $s "*) selected+=("$s") ;; esac
+  fi
+done
+
+have() { type -P "$1" >/dev/null 2>&1; }
+
+run() {
+  printf '  $ %s\n' "$*"
+  [ "$DRY_RUN" -eq 1 ] && return 0
+  "$@"
+}
+
+SKIP_REASON=
+skip() { SKIP_REASON="$*"; }
+
+# --- steps --------------------------------------------------------------------
+
+step_brew() {
+  have brew || { skip "brew not found"; return 0; }
+  # Homebrew 7 asks for confirmation before upgrading by default (checked
+  # 2026-11-06 on 7.0.12: "Ask mode is the default"). Running this command is
+  # the confirmation, so answer yes here rather than setting HOMEBREW_NO_ASK
+  # globally, which would also silence a hand-typed `brew install`.
+  # `brew update` runs first, so an older brew that lacks --yes is updated
+  # before it is asked to parse it.
+  run brew update && run brew upgrade --yes
+}
+
+step_apt() {
+  [ "$(uname)" = Linux ] || { skip "not Linux"; return 0; }
+  have apt-get || { skip "apt-get not found"; return 0; }
+  # apt-get, not apt: apt warns that its CLI is unstable when used in scripts.
+  run sudo apt-get update && run sudo apt-get upgrade -y
+}
+
+step_mise() {
+  local bin
+  bin=$(type -P mise) || { skip "mise not found"; return 0; }
+  # Only the mise.run install (bootstrap does this on Linux) can update
+  # itself. A brew-installed mise refuses ("self-update is disabled for this
+  # install") and is upgraded by the brew step instead.
+  if [ "$bin" = "$HOME/.local/bin/mise" ]; then
+    run mise self-update --yes || return 1
+  else
+    echo "  (mise itself: managed by its package manager, $bin)"
+  fi
+  # `latest` / `lts` in the config mean "newest installed", not "newest
+  # available" — this is the explicit step that moves them.
+  run mise upgrade
+}
+
+step_claude() {
+  local bin
+  bin=$(type -P claude) || { skip "claude not found"; return 0; }
+  # `claude update` is for the native installer. Anything else (brew cask,
+  # npm) belongs to its own package manager.
+  if [ "$bin" != "$HOME/.local/bin/claude" ]; then
+    skip "not the native install ($bin); its package manager upgrades it"
+    return 0
+  fi
+  run claude update
+}
+
+step_zsh() {
+  local dir="${ZPLUGINDIR:-$HOME/.config/zsh/plugins}" plugdir rc=0
+  [ -d "$dir" ] || { skip "no plugins in $dir"; return 0; }
+  have git || { skip "git not found"; return 0; }
+  # Moved here from the plugin-update function in .zshrc (2026-11-06) so this
+  # script and the function share one implementation.
+  #
+  # These are shallow (--depth 1) clones, so `pull --ff-only` fails with
+  # "Not possible to fast-forward" — the truncated histories diverge rather
+  # than descend. They are read-only vendored copies, so fetch + hard reset
+  # is both correct and simpler. It DOES discard local edits: patch a plugin
+  # and you lose it here, which is the right trade for something you do not
+  # own.
+  for plugdir in "$dir"/*/; do
+    plugdir=${plugdir%/}
+    [ -d "$plugdir/.git" ] || continue
+    echo "  ${plugdir##*/}"
+    run git -C "$plugdir" fetch --quiet --depth 1 origin HEAD &&
+      run git -C "$plugdir" reset --quiet --hard FETCH_HEAD &&
+      run git -C "$plugdir" submodule --quiet update --init --recursive ||
+      rc=1
+  done
+  [ "$DRY_RUN" -eq 1 ] || echo "  open a new shell to pick them up."
+  return $rc
+}
+
+step_vim() {
+  have vim || { skip "vim not found"; return 0; }
+  [ -e "$HOME/.vim/autoload/plug.vim" ] || { skip "vim-plug not installed"; return 0; }
+  # Headless form from bootstrap: without a TTY plain `vim +PlugUpdate` waits
+  # forever (2026-08-15: hung 19 minutes in an Ubuntu container). -es and
+  # --sync make it run to completion and exit. `timeout` is a guard on top,
+  # but macOS has it only with brew coreutils, so it is optional.
+  local guard=()
+  have timeout && guard=(timeout 600)
+  run ${guard[@]+"${guard[@]}"} vim -es -u "$HOME/.vimrc" -i NONE \
+    -c 'PlugUpgrade' -c 'PlugUpdate --sync' -c 'qa' </dev/null
+}
+
+# --- main ---------------------------------------------------------------------
+
+ok=() failed=() skipped=()
+for s in "${selected[@]}"; do
+  printf '\n\033[1;34m==>\033[0m %s\n' "$s"
+  SKIP_REASON=
+  "step_$s"
+  rc=$?
+  if [ -n "$SKIP_REASON" ]; then
+    echo "  skip: $SKIP_REASON"
+    skipped+=("$s")
+  elif [ $rc -eq 0 ]; then
+    ok+=("$s")
+  else
+    echo "  FAILED (exit $rc)" >&2
+    failed+=("$s")
+  fi
+done
+
+echo
+echo "ok:      ${ok[*]-}"
+echo "skipped: ${skipped[*]-}"
+echo "failed:  ${failed[*]-}"
+[ ${#failed[@]} -eq 0 ]

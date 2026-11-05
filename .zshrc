@@ -71,23 +71,10 @@ function plugin-load {
 ##? 109 commits behind. Run it by hand now and then; it is not automatic
 ##? because a shell that updates plugins on startup is a shell that hangs on a
 ##? bad network.
+##? The implementation lives in ~/bin/upgrade-all (step "zsh") so that
+##? `upgrade-all` and this name share one copy; this keeps the old name.
 function plugin-update {
-  : ${ZPLUGINDIR:=~/.config/zsh/plugins}
-  ##? These are shallow (--depth 1) clones, so `pull --ff-only` fails with
-  ##? "Not possible to fast-forward" — the truncated histories diverge rather
-  ##? than descend. They are read-only vendored copies, so fetch + hard reset
-  ##? is both correct and simpler. It DOES discard local edits: patch a plugin
-  ##? and you lose it here, which is the right trade for something you do not
-  ##? own.
-  local plugdir
-  for plugdir in $ZPLUGINDIR/*(/N); do
-    [[ -d $plugdir/.git ]] || continue
-    echo "Updating ${plugdir:t}..."
-    command git -C $plugdir fetch --quiet --depth 1 origin HEAD &&
-      command git -C $plugdir reset --quiet --hard FETCH_HEAD &&
-      command git -C $plugdir submodule --quiet update --init --recursive
-  done
-  echo "done. open a new shell to pick them up."
+  upgrade-all zsh
 }
 
 # fzf のキーバインドと補完(人間のときだけ。fzf 自体はコマンドとして常に使える)
