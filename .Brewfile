@@ -40,7 +40,3 @@ brew "exiftool"
 brew "poppler"   # pdftotext。資料の中身を読むのに使う
 brew "icoutils"
 
-# --- GUI --------------------------------------------------------------------
-cask "caffeine"
-cask "maccy"
-
