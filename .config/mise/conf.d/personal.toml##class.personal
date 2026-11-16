@@ -11,3 +11,18 @@
 [tools]
 # 仕事マシンでは使わない(2026-11-06 に共通設定から移した)
 stripe-cli = "latest"
+
+# Vercel CLI(2026-11-16 に brew から移した。brew の formula は 63.1.2 で止まっていた)。
+# **58.5.1 以降は npm の provenance が無い**ので、aube の trust policy
+# (no-downgrade)が「以前は trusted publisher だった」として導入を拒む。
+# 上流の説明は https://github.com/vercel/vercel/issues/17408 : 非公開リポジトリから
+# npm Trusted Publishing で出していて、npm は非公開リポジトリの publish に provenance を
+# 付けられない。代わりの確かめ方は Vercel の公開する integrity と npm の
+# `dist.integrity` の突き合わせ(`curl https://vercel.com/docs/cli/release-notes/npm/<版>/integrity`)。
+# 65.9.0 と 65.16.0 は一致した(2026-11-16)。ネイティブバイナリのパッケージは突き合わせ先が無い。
+# 版で除外すると latest を上げるたびに書き直しになるので、名前で除外している。
+# パッケージを1つずつ挙げないのは、入れない OS 向けのネイティブ(win32 など)や推移的な依存
+# (@vercel/backends)まで解決のときに検査され、挙げても次々に止まったため(2026-11-16)。
+# どれも上の issue と同じ非公開リポジトリから出ている。
+# **この除外は vercel と @vercel スコープにしか効かない。** 他で同じエラーが出たら別件として調べる。
+"npm:vercel" = { version = "latest", trust_policy_excludes = ["vercel", "@vercel/*"] }
