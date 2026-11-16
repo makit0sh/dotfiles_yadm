@@ -32,6 +32,7 @@
 node = "lts"
 python = "latest"
 uv = "latest"
+rust = "latest"
 pnpm = "latest"
 
 # OS を跨いで欲しい CLI。**brew と apt の両方に書かないための逃がし先**が
